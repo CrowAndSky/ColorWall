@@ -107,7 +107,7 @@ body {
 				<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#333333" stroke-width="1"/>
 			</pattern>
 		</defs>
-		<rect width="100%" height="100%" fill="url(#smallGrid)" />
+		<rect width="100%" height="100%" fill="url( #smallGrid )" />
 	</svg>
 	<div id="chip-wrapper">
 		<div id="init-chip"></div>
@@ -123,22 +123,22 @@ body {
 <script type="text/javascript">
 'use strict';
 
-$(document).ready( function(){
+$( document ).ready(  function(  ){
 	/* ------------------ ### GENERAL STUFF ### ------------------
 	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
 	 currentPositionalIndex:
 	 ------------------ ###### ---------------------*/
 	var /*--------------------- ### DOM elements ### ---------------------*/
-		$console = $("#console"),
-		$mouseListener = $("#mouse-listener"),
-		$chipWrapper = $('#chip-wrapper'),
-		$wrapper = $("#wrapper"),
-		wrapperOffset = $wrapper.offset(),
-		$activeChip = $('#init-chip'), /* This prevents first call from failing, saves having to do that logic everytime */
-		$allChips = $('#init-chip'), /* This prevents first call from failing, saves having to do that logic everytime */
+		$console = $( "#console" ),
+		$mouseListener = $( "#mouse-listener" ),
+		$chipWrapper = $( '#chip-wrapper' ),
+		$wrapper = $( "#wrapper" ),
+		wrapperOffset = $wrapper.offset(  ),
+		$activeChip = $( '#init-chip' ), /* This prevents first call from failing, saves having to do that logic everytime */
+		$allChips = $( '#init-chip' ), /* This prevents first call from failing, saves having to do that logic everytime */
 
 		/*--------------------- ### Initially Empty ### ---------------------*/
-		locationHistory = [],
+		locationHistory = [  ],
 		chipHistory = {},
 		currentChipRow = 0,
 		currentChipColumn = 0,
@@ -149,130 +149,97 @@ $(document).ready( function(){
 
 		/*--------------------- ### Layout Related ### ---------------------*/
 		canvasChipXCount = 50,
-		smallChipSize = $wrapper.width() / canvasChipXCount,
+		smallChipSize = $wrapper.width(  ) / canvasChipXCount,
 		mediumChipSize = smallChipSize * 2.5,
 		mediumChipOffsetAmount = smallChipSize * 0.95238,
 		largeChipSize = smallChipSize * 5,
+		animationRequest,
 
 		/*--------------------- ### Arrays of Constants ### ---------------------*/
-		chipPositionalClasses = ['nw','n','ne','w','active','e','sw','s','se'],
-		chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
-		chipPositionalLeftAdjustments = [-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize],
-		chipPositionalTopAdjustments = [-smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize];
+		chipPositionalClasses = [ 'nw','n','ne','w','active','e','sw','s','se' ],
+		chipPositionalIndexAdjustments = [ -101,-100,-99,-1,0,1,99,100,101 ],
+		chipPositionalLeftAdjustments = [ -smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize ],
+		chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ];
 
-		$wrapper.height($wrapper.width() * 0.56);
-		$mouseListener.height($wrapper.width() * 0.56);
+		$wrapper.height( $wrapper.width(  ) * 0.56 );
+		$mouseListener.height( $wrapper.width(  ) * 0.56 );
 /*
 TO - DO:
 
 var start = null;
-var element = document.getElementById("SomeElementYouWantToAnimate");
+var element = document.getElementById( "SomeElementYouWantToAnimate" );
 element.style.position = 'absolute';
 
-function step(timestamp) {
-  if (!start) start = timestamp;
+function step( timestamp ) {
+  if ( !start ) start = timestamp;
   var progress = timestamp - start;
-  element.style.left = Math.min(progress/10, 200) + "px";
-  if (progress < 2000) {
-    window.requestAnimationFrame(step);
+  element.style.left = Math.min( progress/10, 200 ) + "px";
+  if ( progress < 2000 ) {
+    window.requestAnimationFrame( step );
   }
 }
 
-window.requestAnimationFrame(step);
+window.requestAnimationFrame( step );
 */
 
-	var handleGridCursorMove = function(event) {
-		currentChipRow = Math.floor((event.pageY - wrapperOffset.top) / smallChipSize);
-		currentChipColumn = Math.floor((event.pageX - wrapperOffset.left) / smallChipSize);
+	var handleGridCursorMove = function( event ) {
+		currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
+		currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
 		newLocation = currentChipRow * 100 + currentChipColumn;
 
-		if (newLocation !== lastLocation) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-			if (chipsToAnimate > 0) {
-					window.requestAnimationFrame(step);
+		if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
+			if ( !isAnimating ) {
+				isAnimating = true;
+				animationRequest = window.requestAnimationFrame( chipAnimation );
 			}
 
 			/*--------------------- ### START Once per location update ### ---------------------*/
-			//$allChips = $('.chip').not('.chip-leaving'); /* could this be made faster by building $allChips in the iteration? */
-			//$('.chip-leaving').attr('class','chip');
 			lastLocation = newLocation;
 
 			/*--- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
 				Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements ---*/
 			var locationsToExpireCount = locationHistory.length - 60;
-			if (locationsToExpireCount > 0) {
-				for (var i = locationsToExpireCount; i > 0; i--) {
-					var expiredChipID = 'chip' + locationHistory[0];
-					delete chipHistory[expiredChipID];
-					$('#' + expiredChipID).remove();
-					locationHistory.shift();
+			if ( locationsToExpireCount > 0 ) {
+				for ( var i = locationsToExpireCount; i > 0; i-- ) {
+					var expiredChipID = 'chip' + locationHistory[ 0 ];
+					delete chipHistory[ expiredChipID ];
+					$( '#' + expiredChipID ).remove(  );
+					locationHistory.shift(  );
 				}
 			}
 			/*--------------------- ### END Once per location update ### ---------------------*/
-		} /* END if (newLocation !== lastLocation) */
-	}; /* END handleGridCursorMove() */
+		} /* END if ( newLocation !== lastLocation ) */
+	}; /* END handleGridCursorMove(  ) */
 
-	// var handleGridCursorMove2 = function(event) {
-	// 	// currentChipRow = Math.floor((event.pageY - wrapperOffset.top) / smallChipSize);
-	// 	// currentChipColumn = Math.floor((event.pageX - wrapperOffset.left) / smallChipSize);
-	// 	// newLocation = currentChipRow * 100 + currentChipColumn;
+	function chipAnimation ( chipsToAnimate ) {
+		/* THIS WILL BE THE ACTUAL CHIP ANIMATION STUFF
+		for ( var i = 0; i < chipPositionalClasses.length; i++ ) {
+			var currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ i ];
 
-	// 	// if (newLocation !== lastLocation) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-	// 		/*--- wwwww ---*/
-	// 		$allChips.addClass('chip-leaving');
-
-	function chipAnimation (chipsToAnimate) {
-		for (var i = 0; i < chipPositionalClasses.length; i++) {
-			var currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[i];
-
-			if (locationHistory.indexOf(currentPositionalIndex) < 0) {  /*--- This chip does NOT exist in our app cache ---*/
-				var currentLeftPosition = currentChipColumn * smallChipSize + chipPositionalLeftAdjustments[i];
-				var currentTopPosition = currentChipRow * smallChipSize + chipPositionalTopAdjustments[i];
-				var newChip = $('<div class="chip" id="chip' + currentPositionalIndex +'" style="top:' + currentTopPosition + 'px;left:' + currentLeftPosition + 'px;"></div>');
-				chipHistory['chip' + currentPositionalIndex] = newChip; /*--- wwwww ---*/
-				locationHistory.push(currentPositionalIndex); /*--- wwwww ---*/
-				$chipWrapper.append(newChip);
-				newChip.addClass('chip-' + chipPositionalClasses[i]);
-				// var timeoutID = window.setTimeout(function(){
-				// 		$('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[i]);
-				// 	}, 10);
-				// TO - DO:  Will need to initially set just chip class, then set positional class in timeout
-			} else { /*--- This chip DOES exist in our app cache ---*/
-				// TO - DO:  will need to remove any positional classes, then assign new postional class
-				$('#chip' + currentPositionalIndex).removeClass('chip-nw chip-n chip-ne chip-w chip-active chip-e chip-sw chip-s chip-se')
-				$('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[i]);
+			if ( locationHistory.indexOf( currentPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*
+				var currentLeftPosition = currentChipColumn * smallChipSize + chipPositionalLeftAdjustments[ i ];
+				var currentTopPosition = currentChipRow * smallChipSize + chipPositionalTopAdjustments[ i ];
+				var newChip = $( '<div class="chip" id="chip' + currentPositionalIndex +'" style="top:' + currentTopPosition + 'px;left:' + currentLeftPosition + 'px;"></div>' );
+				chipHistory[ 'chip' + currentPositionalIndex ] = newChip; /*--- wwwww ---*
+				locationHistory.push( currentPositionalIndex ); /*--- wwwww ---*
+				$chipWrapper.append( newChip );
+				newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
+			} else { /*--- This chip DOES exist in our app cache ---*
+				// $( '#chip' + currentPositionalIndex ).removeClass( 'chip-nw chip-n chip-ne chip-w chip-active chip-e chip-sw chip-s chip-se' )
+				// $( '#chip' + currentPositionalIndex ).addClass( 'chip-' + chipPositionalClasses[ i ] );
 			}
 		}
 
-		// if (chipsToAnimate > 0) {
-		// 	window.requestAnimationFrame(step);
-		// }
-	}
+		*/
 
-	window.requestAnimationFrame(chipAnimation);
+		if ( chipsToAnimate > 0 ) {
+			animationRequest = window.requestAnimationFrame( chipAnimation );
+		} else {
+			window.cancelAnimationFrame( animationRequest );
+		}
+	}; /* END chipAnimation(  ) */
 
-			// /*--------------------- ### START Once per location update ### ---------------------*/
-			// //$allChips = $('.chip').not('.chip-leaving'); /* could this be made faster by building $allChips in the iteration? */
-			// //$('.chip-leaving').attr('class','chip');
-			// lastLocation = newLocation;
-
-			// --- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-			// 	Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements ---
-			// var locationsToExpireCount = locationHistory.length - 60;
-			// if (locationsToExpireCount > 0) {
-			// 	for (var i = locationsToExpireCount; i > 0; i--) {
-			// 		var expiredChipID = 'chip' + locationHistory[0];
-			// 		delete chipHistory[expiredChipID];
-			// 		$('#' + expiredChipID).remove();
-			// 		locationHistory.shift();
-			// 	}
-			// }
-			// /*--------------------- ### END Once per location update ### ---------------------*/
-
-		//} /* END if (newLocation !== lastLocation) */
-	}; /* END handleGridCursorMove() */
-	}; /* END chipAnimation() */
-
-	$mouseListener.on("mousemove",_.throttle(handleGridCursorMove,100));
+	$mouseListener.on( "mousemove",_.throttle( handleGridCursorMove,100 ) );
 
 
 
@@ -281,9 +248,8 @@ window.requestAnimationFrame(step);
 
 
 	/*--- Big question: rebuild entire displayed DOM with every location change? Is that posible while maintaining anim out events? ---*/
-
-	//chipPositionalClasses = ['chip chip-nw','chip chip-n','chip chip-ne','chip chip-w','chip chip-active','chip chip-e','chip chip-sw','chip chip-s','chip chip-se'],
-});
+	//chipPositionalClasses = [ 'chip chip-nw','chip chip-n','chip chip-ne','chip chip-w','chip chip-active','chip chip-e','chip chip-sw','chip chip-s','chip chip-se' ],
+} );
 
 </script>
 <!--
@@ -304,7 +270,7 @@ $inActiveChipHeight : 100% / $vChipCount;
 $inActiveChipWidth : 100% / $hChipCount;
 $chipHeight : 100% / $vChipCount * $chipMultiplier;
 $chipWidth : 100% / $hChipCount * $chipMultiplier;
-$chipOffset : ($chipWidth * 0.95) - ($hChipCount / $hChipCount);
+$chipOffset : ( $chipWidth * 0.95 ) - ( $hChipCount / $hChipCount );
 
 .chip {
   height: $inActiveChipHeight;
