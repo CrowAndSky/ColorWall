@@ -124,25 +124,25 @@ body {
 <script type="text/javascript">
 'use strict';
 
-$( document ).ready(  function(  ){
+$( document ).ready(  function(){
 	/* ------------------ ### GENERAL STUFF ### ------------------
 	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
 	 currentPositionalIndex:
 	 ------------------ ###### ---------------------*/
 
 
-	 /* -------------------- ###### ---------------------*/
+	 /* -------------------- INIT VARIABLES ---------------------*/
 	var /*--------------------- ### DOM elements ### ---------------------*/
 		$console = $( "#console" ),
 		$mouseListener = $( "#mouse-listener" ),
 		$chipWrapper = $( '#chip-wrapper' ),
 		$wrapper = $( "#wrapper" ),
-		wrapperOffset = $wrapper.offset(  ),
+		wrapperOffset = $wrapper.offset(),
 		$activeChip = $( '#init-chip' ), /* This prevents first call from failing, saves having to do that logic everytime */
 		$allChips = $( '#init-chip' ), /* This prevents first call from failing, saves having to do that logic everytime */
 
 		/*--------------------- ### Initially Empty ### ---------------------*/
-		locationHistory = [  ],
+		locationHistory = [], /* WWWWW */
 		chipHistory = {},
 		currentChipRow = 0,
 		currentChipColumn = 0,
@@ -150,24 +150,24 @@ $( document ).ready(  function(  ){
 		lastLocation = 0,
 		isAnimating = false,
 		animatinLoopCount = 400,
-		animationRequest,
+		animationRequest, /* Will have requestAnimationFrames assigned to it */
 
 		/*--------------------- ### Layout Related ### ---------------------*/
-		canvasChipXCount = 50,
-		smallChipSize = $wrapper.width(  ) / canvasChipXCount,
+		canvasChipXCount = 50, /* WWWWW */
+		smallChipSize = $wrapper.width() / canvasChipXCount,
 		mediumChipSize = smallChipSize * 2.5,
 		mediumChipOffsetAmount = smallChipSize * 0.95238,
 		largeChipSize = smallChipSize * 5,
-		defaultSize = wwwww,
-		defaultLeft = wwwww,
-		defaultTop = wwwww,
-		medSizeStep = wwwww / animationStepCount,
-		medLeftStep = wwwww / animationStepCount,
-		medTopStep = wwwww / animationStepCount,
-		largeSizeStep = wwwww / animationStepCount,
-		largeLeftStep = wwwww / animationStepCount,
-		largeTopStep = wwwww / animationStepCount,
-
+		largeChipOffsetAmount = smallChipSize * 1.25,
+		// defaultSize = wwwww,
+		// defaultLeft = wwwww,
+		// defaultTop = wwwww,
+		medSizeStep = mediumChipSize / animationStepCount,
+		medLeftStep = mediumChipOffsetAmount / animationStepCount,
+		medTopStep = mediumChipOffsetAmount / animationStepCount,
+		largeSizeStep = largeChipSize / animationStepCount,
+		largeLeftStep = largeChipOffsetAmount / animationStepCount,
+		largeTopStep = largeChipOffsetAmount / animationStepCount,
 
 		/*--------------------- ### Temporary ### ---------------------*/
 		$testChip = $( '#testChip' ),
@@ -180,10 +180,11 @@ $( document ).ready(  function(  ){
 		chipPositionalLeftAdjustments = [ -smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize ],
 		chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ],
 		updateQueue = [],
-		Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
+		/* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
 
 		newPositions = [],
-		Chip ID, Compass Index
+		/* VALUES WILL BE: Chip ID, Compass Index */
+
 		processCompasChange = function( concatenatedPositions ) {
 		    switch ( window.localStorage.getItem( 'DEVICE_SUPPORTED_INTERFACES' ) ) {
 		        case '04':
@@ -192,16 +193,15 @@ $( document ).ready(  function(  ){
 		        default:
 		            break;
 		    }
+		},
+		setPixelDimensions = function( event ) {
+			/* -------------------- ###### ---------------------*/
+			$wrapper.height( $wrapper.width() * 0.56 );
+			$mouseListener.height( $wrapper.width() * 0.56 );
 		};
+	/* CLOSE INIT VARIABLES */
 
-		/* -------------------- ###### ---------------------*/
-
-		$wrapper.height( $wrapper.width(  ) * 0.56 );
-		$mouseListener.height( $wrapper.width(  ) * 0.56 );
-
-	/* ------------------ ### GENERAL STUFF ### ------------------
-	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
-	 currentPositionalIndex:
+	/* ------------------ ### Handling Cursor Movement ### ------------------
 	 ------------------ ###### ---------------------*/
 	var handleGridCursorMove = function( event ) {
 		currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
@@ -209,9 +209,9 @@ $( document ).ready(  function(  ){
 		newLocation = currentChipRow * 100 + currentChipColumn;
 
 		if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
+			/*--------------------- ### Start an animation loop or update chip related data ### ---------------------*/
 			if ( !isAnimating ) {
 				isAnimating = true;
-				//animatinLoopCount = 400;
 				animationRequest = window.requestAnimationFrame( chipAnimation );
 			} else {
 				testChipDelta++;
@@ -223,23 +223,20 @@ $( document ).ready(  function(  ){
 
 			/*--- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
 				Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements ---*/
-			// var locationsToExpireCount = locationHistory.length - 60;
-			// if ( locationsToExpireCount > 0 ) {
-			// 	for ( var i = locationsToExpireCount; i > 0; i-- ) {
-			// 		var expiredChipID = 'chip' + locationHistory[ 0 ];
-			// 		delete chipHistory[ expiredChipID ];
-			// 		$( '#' + expiredChipID ).remove(  );
-			// 		locationHistory.shift(  );
-			// 	}
-			// }
-			/*--------------------- ### END Once per location update ### ---------------------*/
+			var locationsToExpireCount = locationHistory.length - 60;
+			if ( locationsToExpireCount > 0 ) {
+				for ( var i = locationsToExpireCount; i > 0; i-- ) {
+					var expiredChipID = 'chip' + locationHistory[ 0 ];
+					delete chipHistory[ expiredChipID ];
+					$( '#' + expiredChipID ).remove();
+					locationHistory.shift();
+				}
+			}
 		} /* END if ( newLocation !== lastLocation ) */
-	}; /* END handleGridCursorMove(  ) */
+	}; /* END handleGridCursorMove() */
 
 
-	/* ------------------ ### GENERAL STUFF ### ------------------
-	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
-	 currentPositionalIndex:
+	/* ------------------ ### CHIP ANIMATION LOOP ### ------------------
 	 ------------------ ###### ---------------------*/
 	function chipAnimation ( chipsToAnimate ) {
 		/* THIS WILL BE THE ACTUAL CHIP ANIMATION STUFF
@@ -262,13 +259,11 @@ $( document ).ready(  function(  ){
 
 		*/
 
-
-		/* ------------------ ### //TESTING ### ------------------
+		/* ------------------ ### //TESTING ### ------------------ */
 		console.log("testChipDelta: " + testChipDelta);
 		testChipLeft = testChipLeft + testChipDelta,
 		$testChip.css('left', testChipLeft + 'px');
-	------------------ ###### ---------------------*/
-
+	/* ------------------ ###### ---------------------*/
 
 		if ( animatinLoopCount < 1 ) {
 			window.cancelAnimationFrame( animationRequest );
@@ -277,20 +272,44 @@ $( document ).ready(  function(  ){
 			animatinLoopCount--;
 			animationRequest = window.requestAnimationFrame( chipAnimation );
 		}
-	}; /* END chipAnimation(  ) */
+	}; /* END chipAnimation( ) */
+
+	setPixelDimensions();
 
 	$mouseListener.on( "mousemove",_.throttle( handleGridCursorMove,100 ) );
 
+} ); /* CLOSE $( document ).ready */
 
 
 
 
-	/*--- Big question: rebuild entire displayed DOM with every location change? Is that posible while maintaining anim out events? ---*/
-	//chipPositionalClasses = [ 'chip chip-nw','chip chip-n','chip chip-ne','chip chip-w','chip chip-active','chip chip-e','chip chip-sw','chip chip-s','chip chip-se' ],
-} );
+
+
+
+
+
+
+/* ------------------ ### GENERAL STUFF ### ------------------
+	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
+	 currentPositionalIndex:
+	 ------------------ ###### ---------------------*/
 
 </script>
+
 <!--
+
+/* ############### TO DO:  ###############
+SHORT::
+
+
+
+MEDIUM::
+Convert chip dimensions to pixels from %
+
+Create function to set CSS for dimensions, run that on window resize or page load
+############### */
+
+
 ------------------ ### NOTES ### ------------------
 
 canvas is 50 X28
@@ -299,6 +318,7 @@ ratio of 100/28 = 3.5714285714%
 <!-- open /Applications/Google\ Chrome.app/ --args --disable-web-security
 
 
+//chipPositionalClasses = [ 'chip chip-nw','chip chip-n','chip chip-ne','chip chip-w','chip chip-active','chip chip-e','chip chip-sw','chip chip-s','chip chip-se' ],
 
 ------------------ ### CHIP SASS ### ------------------
 $hChipCount : 50;
