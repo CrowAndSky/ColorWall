@@ -19,7 +19,7 @@ body {
 }
 
 .chip {
-	display: none;
+	/*display: none;*/
 	height: 3.57143%;
 	margin-left: 0;
 	margin-top: 0;
@@ -111,6 +111,7 @@ body {
 	</svg>
 	<div id="chip-wrapper">
 		<div id="init-chip"></div>
+		<div class="chip" id="testChip" style="top:20px;left:20px;"></div>
 	</div>
 	<div id="mouse-listener">
 	</div>
@@ -128,6 +129,9 @@ $( document ).ready(  function(  ){
 	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
 	 currentPositionalIndex:
 	 ------------------ ###### ---------------------*/
+
+
+	 /* -------------------- ###### ---------------------*/
 	var /*--------------------- ### DOM elements ### ---------------------*/
 		$console = $( "#console" ),
 		$mouseListener = $( "#mouse-listener" ),
@@ -145,7 +149,8 @@ $( document ).ready(  function(  ){
 		newLocation = 0,
 		lastLocation = 0,
 		isAnimating = false,
-
+		animatinLoopCount = 400,
+		animationRequest,
 
 		/*--------------------- ### Layout Related ### ---------------------*/
 		canvasChipXCount = 50,
@@ -153,35 +158,51 @@ $( document ).ready(  function(  ){
 		mediumChipSize = smallChipSize * 2.5,
 		mediumChipOffsetAmount = smallChipSize * 0.95238,
 		largeChipSize = smallChipSize * 5,
-		animationRequest,
+		defaultSize = wwwww,
+		defaultLeft = wwwww,
+		defaultTop = wwwww,
+		medSizeStep = wwwww / animationStepCount,
+		medLeftStep = wwwww / animationStepCount,
+		medTopStep = wwwww / animationStepCount,
+		largeSizeStep = wwwww / animationStepCount,
+		largeLeftStep = wwwww / animationStepCount,
+		largeTopStep = wwwww / animationStepCount,
+
+
+		/*--------------------- ### Temporary ### ---------------------*/
+		$testChip = $( '#testChip' ),
+		testChipDelta = 1,
+		testChipLeft = 1,
 
 		/*--------------------- ### Arrays of Constants ### ---------------------*/
 		chipPositionalClasses = [ 'nw','n','ne','w','active','e','sw','s','se' ],
 		chipPositionalIndexAdjustments = [ -101,-100,-99,-1,0,1,99,100,101 ],
 		chipPositionalLeftAdjustments = [ -smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize ],
-		chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ];
+		chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ],
+		updateQueue = [],
+		Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
+
+		newPositions = [],
+		Chip ID, Compass Index
+		processCompasChange = function( concatenatedPositions ) {
+		    switch ( window.localStorage.getItem( 'DEVICE_SUPPORTED_INTERFACES' ) ) {
+		        case '04':
+		            return [-1, 1 ];
+		            break;
+		        default:
+		            break;
+		    }
+		};
+
+		/* -------------------- ###### ---------------------*/
 
 		$wrapper.height( $wrapper.width(  ) * 0.56 );
 		$mouseListener.height( $wrapper.width(  ) * 0.56 );
-/*
-TO - DO:
 
-var start = null;
-var element = document.getElementById( "SomeElementYouWantToAnimate" );
-element.style.position = 'absolute';
-
-function step( timestamp ) {
-  if ( !start ) start = timestamp;
-  var progress = timestamp - start;
-  element.style.left = Math.min( progress/10, 200 ) + "px";
-  if ( progress < 2000 ) {
-    window.requestAnimationFrame( step );
-  }
-}
-
-window.requestAnimationFrame( step );
-*/
-
+	/* ------------------ ### GENERAL STUFF ### ------------------
+	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
+	 currentPositionalIndex:
+	 ------------------ ###### ---------------------*/
 	var handleGridCursorMove = function( event ) {
 		currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
 		currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
@@ -190,7 +211,11 @@ window.requestAnimationFrame( step );
 		if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
 			if ( !isAnimating ) {
 				isAnimating = true;
+				//animatinLoopCount = 400;
 				animationRequest = window.requestAnimationFrame( chipAnimation );
+			} else {
+				testChipDelta++;
+				console.log("increasing testChipDelta to: " + testChipDelta);
 			}
 
 			/*--------------------- ### START Once per location update ### ---------------------*/
@@ -198,19 +223,24 @@ window.requestAnimationFrame( step );
 
 			/*--- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
 				Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements ---*/
-			var locationsToExpireCount = locationHistory.length - 60;
-			if ( locationsToExpireCount > 0 ) {
-				for ( var i = locationsToExpireCount; i > 0; i-- ) {
-					var expiredChipID = 'chip' + locationHistory[ 0 ];
-					delete chipHistory[ expiredChipID ];
-					$( '#' + expiredChipID ).remove(  );
-					locationHistory.shift(  );
-				}
-			}
+			// var locationsToExpireCount = locationHistory.length - 60;
+			// if ( locationsToExpireCount > 0 ) {
+			// 	for ( var i = locationsToExpireCount; i > 0; i-- ) {
+			// 		var expiredChipID = 'chip' + locationHistory[ 0 ];
+			// 		delete chipHistory[ expiredChipID ];
+			// 		$( '#' + expiredChipID ).remove(  );
+			// 		locationHistory.shift(  );
+			// 	}
+			// }
 			/*--------------------- ### END Once per location update ### ---------------------*/
 		} /* END if ( newLocation !== lastLocation ) */
 	}; /* END handleGridCursorMove(  ) */
 
+
+	/* ------------------ ### GENERAL STUFF ### ------------------
+	 newLocation: Create a unique 2D location index, will only work if there are less than 100 columns
+	 currentPositionalIndex:
+	 ------------------ ###### ---------------------*/
 	function chipAnimation ( chipsToAnimate ) {
 		/* THIS WILL BE THE ACTUAL CHIP ANIMATION STUFF
 		for ( var i = 0; i < chipPositionalClasses.length; i++ ) {
@@ -232,16 +262,24 @@ window.requestAnimationFrame( step );
 
 		*/
 
-		if ( chipsToAnimate > 0 ) {
-			animationRequest = window.requestAnimationFrame( chipAnimation );
-		} else {
+
+		/* ------------------ ### //TESTING ### ------------------
+		console.log("testChipDelta: " + testChipDelta);
+		testChipLeft = testChipLeft + testChipDelta,
+		$testChip.css('left', testChipLeft + 'px');
+	------------------ ###### ---------------------*/
+
+
+		if ( animatinLoopCount < 1 ) {
 			window.cancelAnimationFrame( animationRequest );
+
+		} else {
+			animatinLoopCount--;
+			animationRequest = window.requestAnimationFrame( chipAnimation );
 		}
 	}; /* END chipAnimation(  ) */
 
 	$mouseListener.on( "mousemove",_.throttle( handleGridCursorMove,100 ) );
-
-
 
 
 
