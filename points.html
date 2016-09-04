@@ -149,7 +149,7 @@ $( document ).ready(  function(){
 		newLocation = 0,
 		lastLocation = 0,
 		isAnimating = false,
-		animatinLoopCount = 400,
+		animationLoopCount = 400,
 		animationRequest, /* Will have requestAnimationFrames assigned to it */
 
 		/*--------------------- ### Layout Related ### ---------------------*/
@@ -162,12 +162,12 @@ $( document ).ready(  function(){
 		// defaultSize = wwwww,
 		// defaultLeft = wwwww,
 		// defaultTop = wwwww,
-		medSizeStep = mediumChipSize / animationStepCount,
-		medLeftStep = mediumChipOffsetAmount / animationStepCount,
-		medTopStep = mediumChipOffsetAmount / animationStepCount,
-		largeSizeStep = largeChipSize / animationStepCount,
-		largeLeftStep = largeChipOffsetAmount / animationStepCount,
-		largeTopStep = largeChipOffsetAmount / animationStepCount,
+		medSizeStep = mediumChipSize / animationLoopCount,
+		medLeftStep = mediumChipOffsetAmount / animationLoopCount,
+		medTopStep = mediumChipOffsetAmount / animationLoopCount,
+		largeSizeStep = largeChipSize / animationLoopCount,
+		largeLeftStep = largeChipOffsetAmount / animationLoopCount,
+		largeTopStep = largeChipOffsetAmount / animationLoopCount,
 
 		/*--------------------- ### Temporary ### ---------------------*/
 		$testChip = $( '#testChip' ),
@@ -209,14 +209,17 @@ $( document ).ready(  function(){
 		newLocation = currentChipRow * 100 + currentChipColumn;
 
 		if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-			/*--------------------- ### Start an animation loop or update chip related data ### ---------------------*/
+			/* ------------------ ### Start an animation loop or update chip related data ### ------------------
+				TO DO HERE: Popuklate changes array with new values
+			/* ------------------ ###### ---------------------*/
+
 			if ( !isAnimating ) {
 				isAnimating = true;
 				animationRequest = window.requestAnimationFrame( chipAnimation );
-			} else {
+			} /* else {
 				testChipDelta++;
 				console.log("increasing testChipDelta to: " + testChipDelta);
-			}
+			} */
 
 			/*--------------------- ### START Once per location update ### ---------------------*/
 			lastLocation = newLocation;
@@ -239,37 +242,52 @@ $( document ).ready(  function(){
 	/* ------------------ ### CHIP ANIMATION LOOP ### ------------------
 	 ------------------ ###### ---------------------*/
 	function chipAnimation ( chipsToAnimate ) {
-		/* THIS WILL BE THE ACTUAL CHIP ANIMATION STUFF
-		for ( var i = 0; i < chipPositionalClasses.length; i++ ) {
+		/* ------------------ ### //TESTING ### ------------------
+			TO DO HERE:
+			Go through changes array
+		/* ------------------ ###### ---------------------*/
+		updateQueue = [],
+		/* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
+		for ( var i = 0; i < updateQueue.length; i + 9 ) {
 			var currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ i ];
 
-			if ( locationHistory.indexOf( currentPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*
+			if ( locationHistory.indexOf( currentPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*/
+
+				/* ------------------ TO DO HERE: This code actually needs adjusted ---------------------*/
 				var currentLeftPosition = currentChipColumn * smallChipSize + chipPositionalLeftAdjustments[ i ];
 				var currentTopPosition = currentChipRow * smallChipSize + chipPositionalTopAdjustments[ i ];
 				var newChip = $( '<div class="chip" id="chip' + currentPositionalIndex +'" style="top:' + currentTopPosition + 'px;left:' + currentLeftPosition + 'px;"></div>' );
-				chipHistory[ 'chip' + currentPositionalIndex ] = newChip; /*--- wwwww ---*
-				locationHistory.push( currentPositionalIndex ); /*--- wwwww ---*
+				chipHistory[ 'chip' + currentPositionalIndex ] = newChip; /*--- wwwww ---*/
+				locationHistory.push( currentPositionalIndex ); /*--- wwwww ---*/
 				$chipWrapper.append( newChip );
 				newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
-			} else { /*--- This chip DOES exist in our app cache ---*
-				// $( '#chip' + currentPositionalIndex ).removeClass( 'chip-nw chip-n chip-ne chip-w chip-active chip-e chip-sw chip-s chip-se' )
-				// $( '#chip' + currentPositionalIndex ).addClass( 'chip-' + chipPositionalClasses[ i ] );
+
+			} else { /*--- This chip DOES exist in our app cache ---*/
+				var currentLoopChip = chipHistory.filter( "#" + updateQueue[ i ] );
+				var newLeft = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
+				updateQueue[ i + 1 ] = newLeft;
+				var newTop = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
+				updateQueue[ i + 1 ] = newLeft;
+				var newSize = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
+				updateQueue[ i + 1 ] = newLeft;
+				currentLoopChip.css( "left", newLeft + "px" );
+				currentLoopChip.css( "top", newLeft + "px" );
+				currentLoopChip.css( "height", newLeft + "px" );
+				currentLoopChip.css( "width", newLeft + "px" );
 			}
 		}
 
-		*/
-
-		/* ------------------ ### //TESTING ### ------------------ */
+		/* ------------------ ### //TESTING ### ------------------
 		console.log("testChipDelta: " + testChipDelta);
 		testChipLeft = testChipLeft + testChipDelta,
 		$testChip.css('left', testChipLeft + 'px');
 	/* ------------------ ###### ---------------------*/
 
-		if ( animatinLoopCount < 1 ) {
+		if ( animationLoopCount < 1 ) {
 			window.cancelAnimationFrame( animationRequest );
 
 		} else {
-			animatinLoopCount--;
+			animationLoopCount--;
 			animationRequest = window.requestAnimationFrame( chipAnimation );
 		}
 	}; /* END chipAnimation( ) */
