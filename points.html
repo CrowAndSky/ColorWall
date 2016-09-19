@@ -179,16 +179,39 @@ $( document ).ready(  function(){
 		chipPositionalIndexAdjustments = [ -101,-100,-99,-1,0,1,99,100,101 ],
 		chipPositionalLeftAdjustments = [ -smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize ],
 		chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ],
-		updateQueue = [],
+
+		/*--------------------- ### Arrays of Changing Values ### ---------------------*/
+		animationChangeQueue = [],
 		/* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
 
 		newPositions = [],
 		/* VALUES WILL BE: Chip ID, Compass Index */
 
-		processCompasChange = function( concatenatedPositions ) {
-		    switch ( window.localStorage.getItem( 'DEVICE_SUPPORTED_INTERFACES' ) ) {
-		        case '04':
-		            return [-1, 1 ];
+		updateAnimationChangeQueue = function( newLocation, chipIndexDelta ) {
+			var isNewChip = true;
+
+			for( var i = 0; i < animationChangeQueue.length; i + 9 ) {
+				if ( animationChangeQueue[ i ] === newLocation) {
+					animationChangeQueue[ i + 1 ] = animationChangeQueue[ i + 1 ] - chipPositionalLeftAdjustments[ x ] /animationLoopCount;
+					animationChangeQueue[ i + 2 ] = animationChangeQueue[ i + 2 ] - chipPositionalTopAdjustments[ x ] /animationLoopCount;
+					isNewChip = false;
+					break;
+				}
+			}
+		},
+
+		processLocationChange = function( newLocation, lastLocation ) {
+			/* ------------------ ### Start an animation loop or update chip related data ### ------------------
+				TO DO HERE: Per positon change decide
+			/* ------------------ ###### ---------------------*/
+			var chipIndexDelta = newLocation - lastLocation;
+
+			medSizeStep medLeftStep medTopStep largeSizeStep largeLeftStep largeTopStep
+			mediumChipSize mediumChipOffsetAmount mediumChipOffsetAmount largeChipSize largeChipOffsetAmount largeChipOffsetAmount
+
+		    switch ( chipIndexDelta ) {
+		        case -1 :
+		        	updateAnimationChangeQueue( [-102, ] );
 		            break;
 		        default:
 		            break;
@@ -203,15 +226,19 @@ $( document ).ready(  function(){
 
 	/* ------------------ ### Handling Cursor Movement ### ------------------
 	 ------------------ ###### ---------------------*/
-	var handleGridCursorMove = function( event ) {
-		currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
-		currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
+	// var handleGridCursorMove = function( event ) {
+	var handleGridCursorMove = function( Xpos, Ypos ) {
+		// currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
+		// currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
+		currentChipRow = Math.floor( ( Ypos ) / smallChipSize );
+		currentChipColumn = Math.floor( ( Xpos ) / smallChipSize );
 		newLocation = currentChipRow * 100 + currentChipColumn;
 
 		if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
 			/* ------------------ ### Start an animation loop or update chip related data ### ------------------
 				TO DO HERE: Popuklate changes array with new values
 			/* ------------------ ###### ---------------------*/
+			processLocationChange( newLocation , lastLocation );
 
 			if ( !isAnimating ) {
 				isAnimating = true;
@@ -246,9 +273,9 @@ $( document ).ready(  function(){
 			TO DO HERE:
 			Go through changes array
 		/* ------------------ ###### ---------------------*/
-		updateQueue = [],
+		animationChangeQueue = [],
 		/* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
-		for ( var i = 0; i < updateQueue.length; i + 9 ) {
+		for ( var i = 0; i < animationChangeQueue.length; i + 9 ) {
 			var currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ i ];
 
 			if ( locationHistory.indexOf( currentPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*/
@@ -263,13 +290,13 @@ $( document ).ready(  function(){
 				newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
 
 			} else { /*--- This chip DOES exist in our app cache ---*/
-				var currentLoopChip = chipHistory.filter( "#" + updateQueue[ i ] );
-				var newLeft = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
-				updateQueue[ i + 1 ] = newLeft;
-				var newTop = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
-				updateQueue[ i + 1 ] = newLeft;
-				var newSize = updateQueue[ i + 1 ] + updateQueue[ i + 5 ];
-				updateQueue[ i + 1 ] = newLeft;
+				var currentLoopChip = chipHistory.filter( "#" + animationChangeQueue[ i ] );
+				var newLeft = animationChangeQueue[ i + 1 ] + animationChangeQueue[ i + 5 ];
+				animationChangeQueue[ i + 1 ] = newLeft;
+				var newTop = animationChangeQueue[ i + 1 ] + animationChangeQueue[ i + 5 ];
+				animationChangeQueue[ i + 1 ] = newLeft;
+				var newSize = animationChangeQueue[ i + 1 ] + animationChangeQueue[ i + 5 ];
+				animationChangeQueue[ i + 1 ] = newLeft;
 				currentLoopChip.css( "left", newLeft + "px" );
 				currentLoopChip.css( "top", newLeft + "px" );
 				currentLoopChip.css( "height", newLeft + "px" );
@@ -278,10 +305,19 @@ $( document ).ready(  function(){
 		}
 
 		/* ------------------ ### //TESTING ### ------------------
-		console.log("testChipDelta: " + testChipDelta);
-		testChipLeft = testChipLeft + testChipDelta,
-		$testChip.css('left', testChipLeft + 'px');
-	/* ------------------ ###### ---------------------*/
+			console.log("testChipDelta: " + testChipDelta);
+			testChipLeft = testChipLeft + testChipDelta,
+			$testChip.css('left', testChipLeft + 'px');
+		/* ------------------ ###### ---------------------*/
+		handleGridCursorMove(300, 100);
+
+		var timeoutID = window.setTimeout(function(){
+			handleGridCursorMove(275, 100);
+		}, 800);
+
+		var timeoutID = window.setTimeout(function(){
+			handleGridCursorMove(250, 100);
+		}, 1500);
 
 		if ( animationLoopCount < 1 ) {
 			window.cancelAnimationFrame( animationRequest );
