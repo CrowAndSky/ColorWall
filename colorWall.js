@@ -75,12 +75,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* NOTE HERE: I don'[t think that I need these next two arrays] */
     chipPositionalClasses = [ 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se' ],
     chipPositionalIndexAdjustments = [ -101, -100, -99, -1, 0, 1, 99, 100, 101 ],
-
-    /* NOTE HERE: I expect that I'll need to have an additional, smaller offset for the cardinal directions, we'll see */
     chipPositionalLeftAdjustments,
     chipPositionalTopAdjustments,
-    // chipPositionalLeftAdjustments = [ -smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize,-smallChipSize,0,smallChipSize ],
-    // chipPositionalTopAdjustments = [ -smallChipSize,-smallChipSize,-smallChipSize,0,0,0,smallChipSize,smallChipSize,smallChipSize ],
 
     /*--------------------- ### Arrays of Changing Values ### ---------------------*/
     animationChangeQueue = [],
@@ -112,6 +108,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         largeTopStep = Math.round( largeChipTopOffset / animationLoopCount ),
 
         /* Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se', 'default Chip' */
+        /* NOTE HERE: I expect that I'll need to have an additional, smaller offset for the cardinal directions, we'll see */
         chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset, 0 ],
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset, 0 ]
     },
@@ -131,8 +128,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 TO DO HERE:
             /* ------------------ ###### ---------------------*/
             processLocationChange( newLocation , lastLocation );
-
-            //console.log("lastLocation: " + lastLocation);
 
             if ( !isAnimating ) { /* -- Kick off a requestAnimation loop if one isn't already running --*/
                 isAnimating = true;
@@ -166,8 +161,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         var chipIndexDelta = newLocation - lastLocation; /* -- Expresses the direction we moved in --*/
 
         switch ( chipIndexDelta ) {
+            /* For each chip affected by the cursor move, we pass:
+                Chip ID of all the affected chip, calcualted from the difference to the previous active chip;
+                left offset, top offset, size */
             case -1 : /* -- moved to the West --*/
-                /* chip ID, left offset, top offset, size */
                 updateAnimationChangeQueue( [
                     lastLocation - 102, chipPositionalLeftAdjustments[0], chipPositionalTopAdjustments[0], mediumChipSize,
                     lastLocation - 101, chipPositionalLeftAdjustments[1], chipPositionalTopAdjustments[1], mediumChipSize,
@@ -200,12 +197,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 be chips animating out (if the cursor is moving quickly) which are in the animation queue but which aren't passed here.
         /* ------------------ ###### ---------------------*/
 
-
-        // console.log("chipUpdateArray");
-        // console.log(chipUpdateArray);
-        // console.log("animationChangeQueue");
-        // console.log(animationChangeQueue);
-
         var x = 0;
         while ( x < chipUpdateArray.length ) {
             /* -- Assume that the currently updating chip isn't in the update array, set the outer loop index --*/
@@ -218,14 +209,15 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     console.log("This chip already exists in the animationChangeQueue");
 
                     /* -- TEMP REFRENCE
-                        lastLocation - 102, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
-                        Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
+                        chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
+                        animationChangeQueue: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
                      --*/
 
                     /* -- Find the absolute difference between the current leftOffset and topOffset targets and the new ones being passed in the update array --*/
                     var absLeftDelta = Math.abs( animationChangeQueue[ i + 1 ] - chipUpdateArray[ x + 1 ] );
-                    var absTopDelta = Math.abs( animationChangeQueue[ i + 2 ] - chipUpdateArray[ x + 2 ] )
+                    var absTopDelta = Math.abs( animationChangeQueue[ i + 2 ] - chipUpdateArray[ x + 2 ] );
 
+                    /* -- Determine the left delta for the chip after the current update  --*/
                     if ( animationChangeQueue[ i + 1 ] < chipUpdateArray[ x + 1 ] ) { /* -- The current leftOffset is smaller than the update --*/
                         if ( chipUpdateArray[ x + 1 ] < 0 ) { /* -- Is the new offset target negative  --*/
                             animationChangeQueue[ x + 5 ] =  - absLeftDelta / animationLoopCount; /* -- ###### --*/
@@ -240,6 +232,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                         }
                     }
 
+                    /* -- Determine the top delta for the chip after the current update --*/
                     if ( animationChangeQueue[ i + 2 ] < chipUpdateArray[ x + 2 ] ) { /* -- The current leftOffset is smaller than the update --*/
                         if ( chipUpdateArray[ x + 2 ] < 0 ) { /* -- Is the new offset target negative  --*/
                             animationChangeQueue[ i + 6 ] =  - absTopDelta / animationLoopCount; /* -- ###### --*/
@@ -255,27 +248,49 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     }
 
                     chipNotInUpdateQueue = false;
-                    break;
+
+                    break; /* -- Found a match of the current updated chip in the animationChangeQueue, so stop looking for it there --*/
                 }
 
                 i = i + 9; /* -- advance the loop index --*/
-            } /* -- Close looping through animationChangeQueue --*/
+            } /* -- Close looping through animationChangeQueue while comparing the current chipUpdateArray item --*/
+
+            /* -- TEMP REFRENCE
+                chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
+                animationChangeQueue: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
+            --*/
 
             if ( chipNotInUpdateQueue ) {
-                console.log("it's NOT in the queue");
-                /* -- TO DO HERE: --*/
+                console.log("it's NOT in the animationChangeQueue");
+                /* -- We know that the chip isn't currently animating. This tells us that the chip can only be going from small to medium
+                    IF the chip IS in the location cache:
+                        Compare the location cache item left and top attributes to the updated Array attributes (remember that left and top dimensions will come in signed)
+                            to determine deltas and target attributes.
+                        Use those values along with the appropriate ones from the location cache item to add the item to the animationChangeQueue
+                    ELSE the chip IS NOT in the location cache:
+                        Calculate all attributes using defaults and updated Array attributes (remember that left and top dimensions will come in signed).
+                        Use those values to create the DOM string for the new chip. Add that chip to the locationHistory array
+                        Use those values to create the DOM string for the new chip. Add that chip to the chipHistory array
+                        Use those values to add the item to the animationChangeQueue
+
+
+                TO DO HERE: --*/
                 if ( locationHistory.indexOf( currentChipPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*/
-                    var currentLeftPosition = currentChipColumn * smallChipSize + chipPositionalLeftAdjustments[ i ];
-                    var currentTopPosition = currentChipRow * smallChipSize + chipPositionalTopAdjustments[ i ];
-                    var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="top:' + currentTopPosition + 'px;left:' + currentLeftPosition + 'px;"></div>' );
+                    console.log("it's NOT in the locationHistory");
+                    var thisChipLeft = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    var thisChipTop = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    var thisChipSize = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    var thisChipLeftDelta = ( chipUpdateArray[ x + 3 ] - smallChipSize ) / animationLoopCount;
+
+                    var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="left:' + chipUpdateArray[ x + 1 ] + 'px;top:' + chipUpdateArray[ x + 2 ] + 'px;height' + chipUpdateArray[ x + 3 ] + 'px;width:' + chipUpdateArray[ x + 3 ] + 'px;"></div>' );
                     chipHistory[ 'chip' + currentChipPositionalIndex ] = newChip; /*--- wwwww ---*/
                     locationHistory.push( currentChipPositionalIndex ); /*--- wwwww ---*/
                     $chipWrapper.append( newChip );
-                    newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
+                    //newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
                 }
             }
 
-             x = x + 4; /* -- advance the loop index --*/
+            x = x + 4; /* -- advance the chipUpdateArray loop index --*/
         } /* -- Close looping through chipUpdateArray --*/
     },
 
@@ -333,15 +348,48 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     var timeoutID = window.setTimeout(function(){
         handleGridCursorMove(290, 100);
-    }, 800);
+
+        console.log("animationChangeQueue");
+        console.log(animationChangeQueue);
+    }, 100);
 
     var timeoutID = window.setTimeout(function(){
         handleGridCursorMove(280, 100);
-    }, 1500);
+
+        console.log("animationChangeQueue");
+        console.log(animationChangeQueue);
+    }, 300);
 
     var timeoutID = window.setTimeout(function(){
         handleGridCursorMove(270, 100);
+
+        console.log("animationChangeQueue");
+        console.log(animationChangeQueue);
+    }, 500);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(260, 100);
+    }, 700);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(250, 100);
+    }, 900);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(240, 100);
+    }, 1100);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(230, 100);
+    }, 1300);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(220, 100);
     }, 1500);
+
+    var timeoutID = window.setTimeout(function(){
+        handleGridCursorMove(210, 100);
+    }, 1700);
     /* ------------------ ### END TESTING ### --------------------*/
 
     $mouseListener.on( "mousemove",_.throttle( handleGridCursorMove,100 ) );
