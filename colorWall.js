@@ -82,7 +82,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     animationChangeQueue = [],
     /* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
 
-    newPositions = [],
+    // newPositions = [],  DON'T NEED?
     /* VALUES WILL BE: Chip ID, Compass Index */
 
     /* CLOSE INIT VARIABLES */
@@ -125,7 +125,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
         if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
             /* ------------------ ### Start an animation loop or update chip related data ### ------------------
-                TO DO HERE:
             /* ------------------ ###### ---------------------*/
             processLocationChange( newLocation , lastLocation );
 
@@ -138,8 +137,13 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             lastLocation = newLocation;  /* -- So that we're ready for the next new location --*/
 
             /*--- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements ---*/
-            var locationsToExpireCount = locationHistory.length - 60;
+                Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements
+
+                TO DO HERE:
+                Remove reference to chipHistory array
+                Delete expiring Els with native methods
+                ---*/
+            var locationsToExpireCount = locationHistory.length - 120;
             if ( locationsToExpireCount > 0 ) {
                 for ( var i = locationsToExpireCount; i > 0; i-- ) {
                     var expiredChipID = 'chip' + locationHistory[ 0 ];
@@ -153,7 +157,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     processLocationChange = function( newLocation, lastLocation ) {
         /* ------------------ ### Start an animation loop or update chip related data ### ------------------
-            TO DO HERE:
         mediumSizeStep mediumLeftStep mediumTopStep largeSizeStep largeLeftStep largeTopStep
         mediumChipSize mediumChipLeftOffset mediumChipTopOffset largeChipSize largeChipLeftOffset largeChipTopOffset
         */
@@ -191,18 +194,29 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     updateAnimationChangeQueue = function( chipUpdateArray ) {
         /* ------------------ ### Start an animation loop or update chip related data ### ------------------
-            TO DO HERE:
-
             IMPORTANT THING TO REMEMBER HERE: In this function we're just making updates to the animation queue, there may still
                 be chips animating out (if the cursor is moving quickly) which are in the animation queue but which aren't passed here.
         /* ------------------ ###### ---------------------*/
 
-        var x = 0;
+        var x = 0,
+            i,
+            animationChangeQueueIndex,
+            chipNotInUpdateQueue,
+            chipNotLocationHistory,
+            currentChipPositionalIndex,
+            thisChipLeft,
+            thisChipTop,
+            thisChipSize,
+            thisChipLeftDelta,
+            thisChipTopDelta,
+            thisChipSizeDelta,
+            thisChipCompassIndex;
+
         while ( x < chipUpdateArray.length ) {
             /* -- Assume that the currently updating chip isn't in the update array, set the outer loop index --*/
-            var chipNotInUpdateQueue = true,
-                currentChipPositionalIndex = chipUpdateArray[ x ],
-                i = 0;
+            chipNotInUpdateQueue = true;
+            currentChipPositionalIndex = chipUpdateArray[ x ];
+            i = 0;
 
             while ( i < animationChangeQueue.length ) {  /* -- ###### --*/
                 if ( animationChangeQueue[ i ] === currentChipPositionalIndex ) { /* -- This chip already exists in the animationChangeQueue --*/
@@ -249,11 +263,19 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
                     chipNotInUpdateQueue = false;
 
+                    /* --------- TO DO HERE:
+                        Set other values of the animationChangeQueue? Are there any more to set?
+                    ------------*/
+
                     break; /* -- Found a match of the current updated chip in the animationChangeQueue, so stop looking for it there --*/
                 }
 
                 i = i + 9; /* -- advance the loop index --*/
             } /* -- Close looping through animationChangeQueue while comparing the current chipUpdateArray item --*/
+
+            /* --------- TO DO HERE:
+                Empty the chipUpdateArray array
+             ------------*/
 
             /* -- TEMP REFRENCE
                 chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
@@ -274,20 +296,58 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                         Use those values to add the item to the animationChangeQueue
 
 
-                TO DO HERE: --*/
-                if ( locationHistory.indexOf( currentChipPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*/
+                    A BIG QUESTIONS:
+                        If I drop the queu of DOM Els, then is there anything worth saving in the location history aside from locationIndex, left, and top?
+                            It does serve as a faster way tp know if it's in the DOM, as well, so that serves as a reason to keep it
+                        Should I keep cardinal arrays of default top and left postions and deltas?
+
+                        currentChipPositionalIndex,
+                --*/
+
+                /* TO DO HERE:
+                    Set these vars, which will come from defaults and the chipUpdateArray regardless of whether or not the chip is currently in the locationHistory
+
+                    thisChipLeftDelta,
+                    thisChipTopDelta,
+                    thisChipSizeDelta,
+                    thisChipCompassIndex;
+                --*/
+
+                chipNotLocationHistory = true;
+
+                for ( var animationChangeQueueIndex = 0; animationChangeQueue.length; animationChangeQueueIndex +9 ) { /*--- wwwww ---*/
+                    if ( currentChipPositionalIndex === animationChangeQueue[ animationChangeQueueIndex ]) {
+                        chipNotLocationHistory = false;
+
+                        /* --------- TO DO HERE:
+                            thisChipLeft,
+                            thisChipTop,
+                            thisChipSize =
+                         ------------*/
+                    }
+                }
+
+                if ( chipNotLocationHistory ) {  /*--- This chip does NOT exist in our app cache ---*/
                     console.log("it's NOT in the locationHistory");
-                    var thisChipLeft = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    var thisChipTop = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    var thisChipSize = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    var thisChipLeftDelta = ( chipUpdateArray[ x + 3 ] - smallChipSize ) / animationLoopCount;
+                    /* --------- TO DO HERE:
+                        these vars aren't being set correctly
+                         ------------*/
+                    thisChipLeft = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    thisChipTop = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    thisChipSize = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
+                    thisChipLeftDelta = ( chipUpdateArray[ x + 3 ] - smallChipSize ) / animationLoopCount;
 
                     var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="left:' + chipUpdateArray[ x + 1 ] + 'px;top:' + chipUpdateArray[ x + 2 ] + 'px;height' + chipUpdateArray[ x + 3 ] + 'px;width:' + chipUpdateArray[ x + 3 ] + 'px;"></div>' );
-                    chipHistory[ 'chip' + currentChipPositionalIndex ] = newChip; /*--- wwwww ---*/
+                    //chipHistory[ 'chip' + currentChipPositionalIndex ] = newChip; /*--- wwwww ---*/
                     locationHistory.push( currentChipPositionalIndex ); /*--- wwwww ---*/
                     $chipWrapper.append( newChip );
                     //newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
                 }
+
+                /* TO DO HERE:
+
+                    Write the update to animationChangeQueue.
+                --*/
             }
 
             x = x + 4; /* -- advance the chipUpdateArray loop index --*/
@@ -296,28 +356,23 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### CHIP ANIMATION LOOP ### ------------------
      ------------------ ###### ---------------------*/
-    chipAnimation = function() {  /*--- why was I passing this:  chipsToAnimate, was it testing? ---*/
+    chipAnimation = function() {
         /* ------------------ ### wwwwwww ### ------------------
-            TO DO HERE:
-        /* ------------------ ###### ---------------------*/
-        //animationChangeQueue = [],  /*--- why am creating this here? ---*/
-        /* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
+
+        VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
         for ( var i = 0; i < animationChangeQueue.length; i + 9 ) {
             var currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ i ];
             console.log("running animLoop on: " + currentPositionalIndex);
 
-            // if ( locationHistory.indexOf( currentPositionalIndex ) < 0 ) {  /*--- This chip does NOT exist in our app cache ---*/
+            /* ------------------ ### wwwwwww ### ------------------
+            TO DO HERE:
+            Instead of accessing the chips by a jQuery selector, should I just use native selectbyID? Likewise, should I use native, el.style to set left and toop?
+            But if I do so, do I even need that collection of jQuery objects?
+            document.getElementById("box")
+            ).style.backgroundColor="salmon";
 
-            //     /* ------------------ TO DO HERE: This code actually needs adjusted ---------------------*/
-            //     var currentLeftPosition = currentChipColumn * smallChipSize + chipPositionalLeftAdjustments[ i ];
-            //     var currentTopPosition = currentChipRow * smallChipSize + chipPositionalTopAdjustments[ i ];
-            //     var newChip = $( '<div class="chip" id="chip' + currentPositionalIndex +'" style="top:' + currentTopPosition + 'px;left:' + currentLeftPosition + 'px;"></div>' );
-            //     chipHistory[ 'chip' + currentPositionalIndex ] = newChip; /*--- wwwww ---*/
-            //     locationHistory.push( currentPositionalIndex ); /*--- wwwww ---*/
-            //     $chipWrapper.append( newChip );
-            //     newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
-
-            //} else { /*--- This chip DOES exist in our app cache ---*/
+            If the chip has reached target location, remove the item from the animation queue
+        /* ------------------ ###### ---------------------*/
                 var currentLoopChip = chipHistory.filter( "#" + animationChangeQueue[ i ] );
                 var newLeft = animationChangeQueue[ i + 1 ] + animationChangeQueue[ i + 5 ];
                 animationChangeQueue[ i + 1 ] = newLeft;
