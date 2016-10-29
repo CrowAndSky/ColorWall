@@ -8,6 +8,7 @@ animationChangeQueue: Array of DOM adjustments that should be made with the next
 newLocation, currentPositionalIndex: Unique 2D location indexes calculated by row number * 100 + column number
     This will only work, of course, if there are less than 100 columns
 Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se', 'default Chip'
+    and the positional index adjustments are: -101, -100, -99, -1, 0, 1, 99, 100, 101
 */
 
 /* ------------------ ### How the Whole Thing Works ( at a glance ) ### ------------------
@@ -23,8 +24,7 @@ Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 
 */
 
 /* ------------------ ### TO DO NEXT ### ------------------
-When a chip location is added, do we add the chip to the DOM in updateAnimationChangeQueue() at the same time that we add it to the queue
-    so that we don't have to check for whether it's new every time that we run chipAnimation()?
+Will it be faster to set a 3D transform on elements, instead of top, left, and size?
 ------------------ ###### ---------------------*/
 
 
@@ -39,8 +39,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     $allChips = $( '#init-chip' ), /* This prevents first call from failing, saves having to do that logic everytime */
 
     /*--------------------- ### Initially Empty ### ---------------------*/
-    locationHistory = [], /* WWWWW */
-    chipHistory = {},
+    locationHistory = [], /* VALUES: chipID, Natural Left, Natural Top, Current Size */
     currentChipRow = 0,
     currentChipColumn = 0,
     newLocation = 0,
@@ -66,24 +65,16 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     largeLeftStep,
     largeTopStep,
 
-    /*--------------------- ### Temporary ### ---------------------*/
-    // $testChip = $( '#testChip' ),
-    // testChipDelta = 1,
-    // testChipLeft = 1,
-
     /*--------------------- ### Arrays of Constants ### ---------------------*/
-    /* NOTE HERE: I don'[t think that I need these next two arrays] */
-    chipPositionalClasses = [ 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se' ],
-    chipPositionalIndexAdjustments = [ -101, -100, -99, -1, 0, 1, 99, 100, 101 ],
-    chipPositionalLeftAdjustments,
-    chipPositionalTopAdjustments,
+    /* Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se', 'default Chip'
+        and the positional index adjustments are: -101, -100, -99, -1, 0, 1, 99, 100, 101 */
+    chipPositionalLeftAdjustments = [],
+    chipPositionalLeftStepDeltas = [],
+    chipPositionalTopAdjustments = [],
+    chipPositionalTopStepDeltas = [],
 
     /*--------------------- ### Arrays of Changing Values ### ---------------------*/
-    animationChangeQueue = [],
-    /* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
-
-    // newPositions = [],  DON'T NEED?
-    /* VALUES WILL BE: Chip ID, Compass Index */
+    animationChangeQueue = [], /* VALUES WILL BE: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index */
 
     /* CLOSE INIT VARIABLES */
 
@@ -91,26 +82,29 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         /* -------------------- ### TO DO HERE: pass raw (not calculated) values into each assigment ### ---------------------*/
         $wrapper.height( Math.round( $wrapper.width() * 0.56 ));
         $mouseListener.height( Math.round( $wrapper.width() * 0.56 ));
-        canvasChipXCount = 50, /* The number of columns in the Color Wall */
-        smallChipSize = Math.round( $wrapper.width() / canvasChipXCount ),
-        mediumChipSize = Math.round( smallChipSize * 2.5 ),
-        mediumChipLeftOffset = Math.round( smallChipSize *  0.95238 ),
-        mediumChipTopOffset = Math.round( smallChipSize * 0.95238 ),
-        largeChipSize = Math.round( smallChipSize * 5 ),
-        largeChipOffset = Math.round( smallChipSize * 1.25 ),
-        largeChipLeftOffset = Math.round( smallChipSize * 1.25 ),
-        largeChipTopOffset = Math.round( smallChipSize * 1.25 ),
-        mediumSizeStep = Math.round( mediumChipSize / animationLoopCount ),
-        mediumLeftStep = Math.round( mediumChipLeftOffset / animationLoopCount ),
-        mediumTopStep = Math.round( mediumChipTopOffset / animationLoopCount ),
-        largeSizeStep = Math.round( largeChipSize / animationLoopCount ),
-        largeLeftStep = Math.round( largeChipLeftOffset / animationLoopCount ),
-        largeTopStep = Math.round( largeChipTopOffset / animationLoopCount ),
+        canvasChipXCount = 50; /* The number of columns in the Color Wall */
+        smallChipSize = Math.round( $wrapper.width() / canvasChipXCount );
+        mediumChipSize = Math.round( smallChipSize * 2.5 );
+        mediumChipLeftOffset = Math.round( smallChipSize *  0.95238 );
+        mediumChipTopOffset = Math.round( smallChipSize * 0.95238 );
+        largeChipSize = Math.round( smallChipSize * 5 );
+        largeChipOffset = Math.round( smallChipSize * 1.25 );
+        largeChipLeftOffset = Math.round( smallChipSize * 1.25 );
+        largeChipTopOffset = Math.round( smallChipSize * 1.25 );
+        mediumSizeStep = Math.round( mediumChipSize / animationLoopCount );
+        mediumLeftStep = Math.round( mediumChipLeftOffset / animationLoopCount );
+        mediumTopStep = Math.round( mediumChipTopOffset / animationLoopCount );
+        largeSizeStep = Math.round( largeChipSize / animationLoopCount );
+        largeLeftStep = Math.round( largeChipLeftOffset / animationLoopCount );
+        largeTopStep = Math.round( largeChipTopOffset / animationLoopCount );
 
         /* Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se', 'default Chip' */
-        /* NOTE HERE: I expect that I'll need to have an additional, smaller offset for the cardinal directions, we'll see */
-        chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset, 0 ],
-        chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset, 0 ]
+        chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset, 0 ];
+        chipPositionalLeftStepDeltas = [ -mediumLeftStep, 0, mediumLeftStep, -mediumLeftStep, -largeChipLeftOffset, mediumLeftStep, -mediumLeftStep, 0, mediumLeftStep, 0 ];
+
+        /*--- TO DO HERE: divide these by step count---*/
+        chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset, 0 ];
+        chipPositionalTopStepDeltas = [ -mediumChipTopStep, -mediumChipTopStep, -mediumChipTopStep, 0, -largeChipLeftStep, 0, mediumChipTopStep, mediumChipTopStep, mediumChipTopStep, 0 ];
     },
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
@@ -121,11 +115,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         currentChipRow = Math.floor( ( Ypos ) / smallChipSize );
         currentChipColumn = Math.floor( ( Xpos ) / smallChipSize );
         newLocation = currentChipRow * 100 + currentChipColumn;
-        //console.log("newLocation: " + newLocation);
 
         if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-            /* ------------------ ### Start an animation loop or update chip related data ### ------------------
-            /* ------------------ ###### ---------------------*/
+            /* ------------------ ### Start an animation loop or update chip related data ### ------------------ */
             processLocationChange( newLocation , lastLocation );
 
             if ( !isAnimating ) { /* -- Kick off a requestAnimation loop if one isn't already running --*/
@@ -137,17 +129,15 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             lastLocation = newLocation;  /* -- So that we're ready for the next new location --*/
 
             /*--- Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                Essentially, we allow about 6 moves in the color wall before we beginning expiring the original elements
+                Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
 
                 TO DO HERE:
-                Remove reference to chipHistory array
                 Delete expiring Els with native methods
                 ---*/
             var locationsToExpireCount = locationHistory.length - 120;
             if ( locationsToExpireCount > 0 ) {
                 for ( var i = locationsToExpireCount; i > 0; i-- ) {
                     var expiredChipID = 'chip' + locationHistory[ 0 ];
-                    delete chipHistory[ expiredChipID ];
                     $( '#' + expiredChipID ).remove();
                     locationHistory.shift();
                 }
@@ -156,37 +146,30 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     }, /* END handleGridCursorMove() */
 
     processLocationChange = function( newLocation, lastLocation ) {
-        /* ------------------ ### Start an animation loop or update chip related data ### ------------------
-        mediumSizeStep mediumLeftStep mediumTopStep largeSizeStep largeLeftStep largeTopStep
-        mediumChipSize mediumChipLeftOffset mediumChipTopOffset largeChipSize largeChipLeftOffset largeChipTopOffset
-        */
-
+        /* ------------------ ### Start an animation loop or update chip related data ### ------------------*/
         var chipIndexDelta = newLocation - lastLocation; /* -- Expresses the direction we moved in --*/
 
         switch ( chipIndexDelta ) {
             /* For each chip affected by the cursor move, we pass:
-                Chip ID of all the affected chip, calcualted from the difference to the previous active chip;
-                left offset, top offset, size */
-            case -1 : /* -- moved to the West --*/
+                Chip ID of all the affected chip, calculated from the difference to the previous active chip;
+                new left offset, new top offset, new size, new cardinal position index */
+            case -1 : /* -- moved to the West --*/ /*--- wwwww ---*/
                 updateAnimationChangeQueue( [
-                    lastLocation - 102, chipPositionalLeftAdjustments[0], chipPositionalTopAdjustments[0], mediumChipSize,
-                    lastLocation - 101, chipPositionalLeftAdjustments[1], chipPositionalTopAdjustments[1], mediumChipSize,
-                    lastLocation - 100, chipPositionalLeftAdjustments[2], chipPositionalTopAdjustments[2], mediumChipSize,
-                    lastLocation - 2, chipPositionalLeftAdjustments[3], chipPositionalTopAdjustments[3], mediumChipSize,
-                    lastLocation - 1, chipPositionalLeftAdjustments[4], chipPositionalTopAdjustments[4], largeChipSize,
-                    lastLocation - 0, chipPositionalLeftAdjustments[5], chipPositionalTopAdjustments[5], mediumChipSize,
-                    lastLocation + 98, chipPositionalLeftAdjustments[6], chipPositionalTopAdjustments[6], mediumChipSize,
-                    lastLocation + 99, chipPositionalLeftAdjustments[7], chipPositionalTopAdjustments[7], mediumChipSize,
-                    lastLocation + 100, chipPositionalLeftAdjustments[8], chipPositionalTopAdjustments[8], mediumChipSize,
-
-                    lastLocation - 99, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize,
-                    lastLocation + 1, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize,
-                    lastLocation + 101, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize,
+                    lastLocation - 102, chipPositionalLeftAdjustments[0], chipPositionalTopAdjustments[0], mediumChipSize, 0,
+                    lastLocation - 101, chipPositionalLeftAdjustments[1], chipPositionalTopAdjustments[1], mediumChipSize, 1,
+                    lastLocation - 100, chipPositionalLeftAdjustments[2], chipPositionalTopAdjustments[2], mediumChipSize, 2,
+                    lastLocation - 2, chipPositionalLeftAdjustments[3], chipPositionalTopAdjustments[3], mediumChipSize, 3,
+                    lastLocation - 1, chipPositionalLeftAdjustments[4], chipPositionalTopAdjustments[4], largeChipSize, 4,
+                    lastLocation - 0, chipPositionalLeftAdjustments[5], chipPositionalTopAdjustments[5], mediumChipSize, 5,
+                    lastLocation + 98, chipPositionalLeftAdjustments[6], chipPositionalTopAdjustments[6], mediumChipSize, 6,
+                    lastLocation + 99, chipPositionalLeftAdjustments[7], chipPositionalTopAdjustments[7], mediumChipSize, 7,
+                    lastLocation + 100, chipPositionalLeftAdjustments[8], chipPositionalTopAdjustments[8], mediumChipSize, 8,
+                    lastLocation - 99, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize, 9,
+                    lastLocation + 1, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize, 9,
+                    lastLocation + 101, chipPositionalLeftAdjustments[9], chipPositionalTopAdjustments[9], mediumChipSize, 9
                 ] );
-
-                /* TO DO HERE: create case switches for all 8 possible directional move */
-
                 break;
+
             default:
                 break;
         }
@@ -196,8 +179,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         /* ------------------ ### Start an animation loop or update chip related data ### ------------------
             IMPORTANT THING TO REMEMBER HERE: In this function we're just making updates to the animation queue, there may still
                 be chips animating out (if the cursor is moving quickly) which are in the animation queue but which aren't passed here.
-        /* ------------------ ###### ---------------------*/
 
+            chipUpdateArray values will be: chipID, new left offset, new top offset, new size, new cardinal position index  */
+        /* ------------------ ###### ---------------------*/
         var x = 0,
             i,
             animationChangeQueueIndex,
@@ -223,7 +207,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     console.log("This chip already exists in the animationChangeQueue");
 
                     /* -- TEMP REFRENCE
-                        chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
+                        chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize, new cardinal position index
                         animationChangeQueue: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
                      --*/
 
@@ -264,22 +248,19 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     chipNotInUpdateQueue = false;
 
                     /* --------- TO DO HERE:
-                        Set other values of the animationChangeQueue? Are there any more to set?
+                        Set other values of the animationChangeQueue? Are there any more to set. Or, since these are just aupdating values that
+                            are in the animQueue, do we not to make fewer updates?
                     ------------*/
-
                     break; /* -- Found a match of the current updated chip in the animationChangeQueue, so stop looking for it there --*/
                 }
 
                 i = i + 9; /* -- advance the loop index --*/
             } /* -- Close looping through animationChangeQueue while comparing the current chipUpdateArray item --*/
 
-            /* --------- TO DO HERE:
-                Empty the chipUpdateArray array
-             ------------*/
-
             /* -- TEMP REFRENCE
-                chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize
+                chipUpdateArray: chipID, mediumChipLeftOffset, mediumChipTopOffset, mediumChipSize, new cardinal position index
                 animationChangeQueue: Chip ID, Current Left, Current Top, Current Size, Target Size, Delta Left, Delta Top, Delta Size, Current Compass Index
+                locationHistory: chipID, Natural Left, Natural Top, Current Size
             --*/
 
             if ( chipNotInUpdateQueue ) {
@@ -292,66 +273,81 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     ELSE the chip IS NOT in the location cache:
                         Calculate all attributes using defaults and updated Array attributes (remember that left and top dimensions will come in signed).
                         Use those values to create the DOM string for the new chip. Add that chip to the locationHistory array
-                        Use those values to create the DOM string for the new chip. Add that chip to the chipHistory array
                         Use those values to add the item to the animationChangeQueue
-
-
-                    A BIG QUESTIONS:
-                        If I drop the queu of DOM Els, then is there anything worth saving in the location history aside from locationIndex, left, and top?
-                            It does serve as a faster way tp know if it's in the DOM, as well, so that serves as a reason to keep it
-                        Should I keep cardinal arrays of default top and left postions and deltas?
-
-                        currentChipPositionalIndex,
                 --*/
 
                 /* TO DO HERE:
                     Set these vars, which will come from defaults and the chipUpdateArray regardless of whether or not the chip is currently in the locationHistory
+                    chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset, 0 ];
+                    chipPositionalLeftStepDeltas = [ -mediumLeftStep, 0, mediumLeftStep, -mediumLeftStep, -largeChipLeftOffset, mediumLeftStep, -mediumLeftStep, 0, mediumLeftStep, 0 ];
+                    chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset, 0 ];
+                    chipPositionalTopStepDeltas = [ -mediumChipTopStep, -mediumChipTopStep, -mediumChipTopStep, 0, -largeChipLeftStep, 0, mediumChipTopStep, mediumChipTopStep, mediumChipTopStep, 0 ];
 
                     thisChipLeftDelta,
                     thisChipTopDelta,
                     thisChipSizeDelta,
                     thisChipCompassIndex;
+
+                    chipPositionalLeftAdjustments[  ]
+                    chipPositionalLeftStepDeltas[  ]
+                    chipPositionalTopAdjustments[  ]
+                    chipPositionalTopStepDeltas[  ]
+
+                    chipUpdateArray: chipID, new left offset, new top offset, new size, new cardinal position index
                 --*/
 
                 chipNotLocationHistory = true;
 
-                for ( var animationChangeQueueIndex = 0; animationChangeQueue.length; animationChangeQueueIndex +9 ) { /*--- wwwww ---*/
-                    if ( currentChipPositionalIndex === animationChangeQueue[ animationChangeQueueIndex ]) {
+                for ( var locationHistoryIndex = 0; locationHistory.length; locationHistoryIndex + 4 ) { /*--- wwwww ---*/
+                    if ( currentChipPositionalIndex === locationHistory[ locationHistoryIndex ]) {
                         chipNotLocationHistory = false;
-
-                        /* --------- TO DO HERE:
-                            thisChipLeft,
-                            thisChipTop,
-                            thisChipSize =
-                         ------------*/
+                        thisChipLeft = locationHistory[ locationHistoryIndex + 1 ];
+                        thisChipTop = locationHistory[ locationHistoryIndex + 2 ];
+                        thisChipSize = chipUpdateArray[ x + 3 ];
+                        locationHistory[ locationHistoryIndex + 3 ] = chipUpdateArray[ x + 3 ];
                     }
                 }
 
                 if ( chipNotLocationHistory ) {  /*--- This chip does NOT exist in our app cache ---*/
                     console.log("it's NOT in the locationHistory");
-                    /* --------- TO DO HERE:
-                        these vars aren't being set correctly
-                         ------------*/
-                    thisChipLeft = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    thisChipTop = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    thisChipSize = currentChipColumn * smallChipSize + chipUpdateArray[ x + 1 ];
-                    thisChipLeftDelta = ( chipUpdateArray[ x + 3 ] - smallChipSize ) / animationLoopCount;
-
-                    var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="left:' + chipUpdateArray[ x + 1 ] + 'px;top:' + chipUpdateArray[ x + 2 ] + 'px;height' + chipUpdateArray[ x + 3 ] + 'px;width:' + chipUpdateArray[ x + 3 ] + 'px;"></div>' );
-                    //chipHistory[ 'chip' + currentChipPositionalIndex ] = newChip; /*--- wwwww ---*/
-                    locationHistory.push( currentChipPositionalIndex ); /*--- wwwww ---*/
-                    $chipWrapper.append( newChip );
-                    //newChip.addClass( 'chip-' + chipPositionalClasses[ i ] );
+                    thisChipLeft = currentChipColumn * smallChipSize;
+                    thisChipTop = currentChipRow * smallChipSize;
+                    thisChipSize = chipUpdateArray[ x + 3 ];
                 }
 
                 /* TO DO HERE:
+                    Figure all of these out
+                --*/
+                thisChipLeftDelta = ( chipUpdateArray[ x + 3 ] - smallChipSize ) / animationLoopCount;
 
-                    Write the update to animationChangeQueue.
+                if ( chipNotLocationHistory ) {
+                    var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="left:' + chipUpdateArray[ x + 1 ] + 'px;top:' + chipUpdateArray[ x + 2 ] + 'px;height' + chipUpdateArray[ x + 3 ] + 'px;width:' + chipUpdateArray[ x + 3 ] + 'px;"></div>' );
+                    locationHistory.push( currentChipPositionalIndex ); /*--- wwwww ---*/
+                    $chipWrapper.append( newChip );
+                }
+
+                var z = animationChangeQueue.length;
+                animationChangeQueue[ z ] = currentChipPositionalIndex;
+                animationChangeQueue[ z + 1 ] = thisChipLeft;
+                animationChangeQueue[ z + 2 ] = thisChipTop;
+                animationChangeQueue[ z + 3 ] = thisChipSize;
+                animationChangeQueue[ z + 4 ] = thisChipSize;
+                animationChangeQueue[ z + 5 ] = thisChipLeftDelta;
+                animationChangeQueue[ z + 6 ] = thisChipTopDelta;
+                animationChangeQueue[ z + 7 ] = thisChipSizeDelta;
+                animationChangeQueue[ z + 8 ] = chipUpdateArray[ x + 3 ];
+
+                /* TO DO HERE:
+                    FINALLY, Write the update to animationChangeQueue.   USE currentChipPositionalIndex
                 --*/
             }
 
             x = x + 4; /* -- advance the chipUpdateArray loop index --*/
         } /* -- Close looping through chipUpdateArray --*/
+
+        /* --------- TO DO HERE:
+            Empty the chipUpdateArray array
+         ------------*/
     },
 
     /* ------------------ ### CHIP ANIMATION LOOP ### ------------------
@@ -371,7 +367,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             document.getElementById("box")
             ).style.backgroundColor="salmon";
 
-            If the chip has reached target location, remove the item from the animation queue
+            Once the chip has reached its target location:
+                Remove the item from the animation queue
+
+
         /* ------------------ ###### ---------------------*/
                 var currentLoopChip = chipHistory.filter( "#" + animationChangeQueue[ i ] );
                 var newLeft = animationChangeQueue[ i + 1 ] + animationChangeQueue[ i + 5 ];
