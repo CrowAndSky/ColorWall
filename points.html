@@ -11,65 +11,16 @@ body {
 }
 .chip {
 	background-color: #bada55;
-	border: 1px solid red;
+	/*border: 1px solid #999;*/
+    height: 3px;
 	opacity: 1;
 	position: absolute;
 	/*transition: opacity 10s linear, margin-left 10s linear, margin-top 10s linear, height 10s linear, width 10s linear;*/
     transform-origin: center center 0px;
-    transition: transform 5s linear;
+    /*transition: transform 5s;*/
+    width: 3px;
 	z-index: 1;
 }
-
-/*.chip {
-	display: none;
-	height: 3.57143%;
-	margin-left: 0;
-	margin-top: 0;
-    transform-origin: center center 0px;
-	width: 2%;
-}*/
-
-/*.chip.chip-nw, .chip.chip-n, .chip.chip-ne, .chip.chip-e, .chip.chip-se, .chip.chip-s, .chip.chip-sw, .chip.chip-w {
-	height: 8.92857%;
-	opacity: 1;
-	width: 5%;
-	z-index: 2;
-}
-
-.chip.chip-n {
-	background-color: magenta;
-}
-
-.chip.chip-s {
-	background-color: orange;
-}
-
-.chip.chip-active {
-	background-color: #abc;
-	display: block;
-	height: 17.85714%;
-	opacity: 1;
-	width: 10%;
-	margin-left: -2.5%;
-	margin-top: -2.5%;
-	z-index: 3;
-}*/
-
-/*.chip.chip-nw, .chip.chip-n, .chip.chip-ne {
-  margin-top: -3.75%;
-}
-
-.chip.chip-sw, .chip.chip-s, .chip.chip-se {
-  margin-top: 3.75%;
-}
-
-.chip.chip-nw, .chip.chip-w, .chip.chip-sw {
-  margin-left: -3.75%;
-}
-
-.chip.chip-ne, .chip.chip-e, .chip.chip-se {
-  margin-left: 3.75%;
-}*/
 
 #init-chip {
 	display: none;
@@ -79,7 +30,8 @@ body {
 	background: #efefee;
 	height: 95vh;
 	position: relative;
-	width: 95vw;
+    width: 500px;
+	/*width: 95vw;*/
 }
 #console {
 	word-break: break-word;
