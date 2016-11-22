@@ -16,13 +16,13 @@ body {
 	opacity: 1;
 	position: absolute;
     transform-origin: center center 0px;
-    transition: all 5s;
+    transition: all 2s;
     width: 10px;
 	z-index: 1;
 }
 
-#init-chip {
-	display: none;
+.chip-large {
+    z-index: 2;
 }
 
 #wrapper {
@@ -44,9 +44,10 @@ body {
 	position: absolute;
 	top: 0;
 	width: 100%;
+    z-index: 1;
 }
+
 #mouse-listener {
-	border: 1px solid red;
 	position: relative;
 	z-index: 2;
 }
@@ -139,21 +140,6 @@ $chipOffset : ( $chipWidth * 0.95 ) - ( $hChipCount / $hChipCount );
 .chip.chip-ne, .chip.chip-e, .chip.chip-se {
   margin-left: $chipOffset;
 }
-
-
-
- <div class="chip chip-nw" id="chip2344" style="top:35.714285714%;left:20%;"></div>
-		<div class="chip chip-n" id="chip2344" style="top:35.714285714%;left:22%;"></div>
-		<div class="chip chip-ne" id="chip2344" style="top:35.714285714%;left:24%;"></div>
-
-		<div class="chip chip-e" id="chip2344" style="top:39.2857142854%;left:24%;"></div>
-		<div class="chip chip-active" id="chip2344" style="top:39.2857142854%;left:22%;""></div>
-		<div class="chip chip-w" id="chip2344" style="top:39.2857142854%;left:20%;"></div>
-
-		<div class="chip chip-se" id="chip2344" style="top:42.8571428568%;left:24%;"></div>
-		<div class="chip chip-s" id="chip2344" style="top:42.8571428568%;left:22%;"></div>
-		<div class="chip chip-sw" id="chip2344" style="top:42.8571428568%;left:20%;"></div>
-
 -->
 </body>
 </html>
