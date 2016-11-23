@@ -13,6 +13,14 @@ Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 
 2) Attach mousemove listener on the transparent, top level EL which exists just for that purpose, call back function is handleGridCursorMove()
 3) The handleGridCursorMove function determines if we've moved to a new node. If we have:
 4)
+
+
+TO DO:
+Why active immediately goes full size
+All currently active need higher z-index
+Previous not being shrunk
+Old not being removed
+
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -130,19 +138,29 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             currentPositionalIndex,
             prevActiveIndex,
             chipSizeClass,
+            previouslyActiveChipsLength,
             i,
             x;
+
+        if ( prevActiveIndex >= 0 ) {
+            document.getElementsByClassName("chip-large")[0].classList.remove( "chip-large" );
+        }
 
         for ( i = 0; i < chipPositionalIndexAdjustments.length; i++ ) {
             currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[i];
 
             currentlyActiveChips.push( currentPositionalIndex );
 
+            console.log("###############################################");
+
             prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
             console.log("prevActiveIndex: " + prevActiveIndex);
-            previouslyActiveChips.splice( prevActiveIndex, 1 );
+            if ( prevActiveIndex >= 0 ) {
+                previouslyActiveChips.splice( prevActiveIndex, 1 );
+            }
 
             if ( i === 4) {
+                //document.getElementById( 'chip' + currentPositionalIndex ).classList.add( "chip-large" );
                 chipSizeClass = "chip-large";
                 chipTransform = "matrix3d( 4, 0, 0.00, 0, 0.00, 4, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
             } else {
@@ -153,10 +171,12 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
                 //console.log("it IS in the locationHistory: " + currentPositionalIndex);
                 document.getElementById( 'chip' + currentPositionalIndex ).style.transform = chipTransform;
-                document.getElementById( 'chip' + currentPositionalIndex ).className = chipSizeClass;
+                if ( i === 4) {
+                    document.getElementById( 'chip' + currentPositionalIndex ).classList.add( "chip-large" );
+                }
             } else {
                 //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                var newChip = '<div class="chip" class="' + chipSizeClass + '" id="chip' + currentPositionalIndex +'" style="' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="chip ' + chipSizeClass + '" id="chip' + currentPositionalIndex +'" style="' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
 
@@ -171,16 +191,22 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         console.log("previouslyActiveChips before:");
         console.log(previouslyActiveChips);
 
-        for ( x = 0; x < previouslyActiveChips.length; x++ ) {
-            document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.transform = defaultElementTransform;
+        previouslyActiveChipsLength = previouslyActiveChips.length;
+
+        if ( previouslyActiveChipsLength > 0 ) {
+            for ( x = 0; x < previouslyActiveChips.length; x++ ) {
+                console.log("shriking down: " + previouslyActiveChips[ x ]);
+                document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.transform = defaultElementTransform;
+            }
         }
 
         previouslyActiveChips = currentlyActiveChips;
 
+        console.log("currentlyActiveChips after:");
+        console.log(currentlyActiveChips);
+
         console.log("previouslyActiveChips after:");
         console.log(previouslyActiveChips);
-
-
     }; /* CLOSE processLocationChange() */
 
     /* END Var declarations */
