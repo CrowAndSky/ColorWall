@@ -11,25 +11,30 @@ body {
 }
 .chip {
 	background-color: #bada55;
-	border: 1px solid #999;
-    height: 10px;
+	/*border: 1px solid #999;*/
+    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
+    /*height: 10px;*/
 	opacity: 1;
 	position: absolute;
     transform-origin: center center 0px;
-    transition: all 2s;
-    width: 10px;
+    transition: transform 1s;
+    /*width: 10px;*/
 	z-index: 1;
 }
 
-.chip-large {
+.chip-medium {
     z-index: 2;
+}
+
+.chip-large {
+    z-index: 3;
 }
 
 #wrapper {
 	background: #efefee;
 	height: 95vh;
 	position: relative;
-    width: 500px;
+    width: 1000px;
 }
 
 #console {
