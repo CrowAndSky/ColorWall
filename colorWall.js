@@ -57,7 +57,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
-    defaultElementTransform = "matrix3d( 1, 0, 0.00, 0, 0.00, 1, 0.00, 0, 0, 0, 1, 0, 0, 0, 0, 1 )",
+    // chipPositionalIndexAdjustments = [-202,-201,-200,-199,-198,-102,-101,-100,-99,-98,-2,-1,0,1,2,98,99,100,101,102],
+    // chipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2 ],
+    // chipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, -1, 0, 1, 2, -2, -1, 0, 1, 2, -2, -1, 0, 1, 2, -2, -1, 0, 1, 2 ],
+    bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
+    bufferChipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 2, 2, 2 ],
+    bufferChipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, 2, -2, 2, -2, 2, -2, -1, 0, 1, 2 ],
+    // defaultElementTransform = "matrix3d( 1, 0, 0.00, 0, 0.00, 1, 0.00, 0, 0, 0, 1, 0, 0, 0, 0, 1 )",
+    defaultElementTransform = "translate3d(0, 0, 0) scale3d(1, 1, 0)",
 
     /* CLOSE INIT VARIABLES */
 
@@ -97,7 +104,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
             */
             lastLocation = newLocation;  /* -- So that we're ready for the next new location --*/
-            var locationsToExpireCount = locationHistory.length - 120;
+            var locationsToExpireCount = locationHistory.length - 150;
             if ( locationsToExpireCount > 0 ) {
                 for ( var i = locationsToExpireCount; i > 0; i-- ) {
                     //console.log("removing chip: " + locationHistory[ 0 ]);
@@ -114,13 +121,16 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         /*--- TO DO HERE:
             handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
             newLocation - lastLocation
+
+            remove manual z-index setting
         ---*/
         //console.log("###############################################");
 
         var chipTransform,
             currentPositionalIndex,
             prevActiveIndex,
-            //chipSizeClass,
+            deactivatedChip,
+            chipClass,
             chipZindex,
             previouslyActiveChipsLength,
             i,
@@ -128,6 +138,17 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
         if ( prevActiveIndex >= 0 ) {
             document.getElementsByClassName("chip-large")[0].classList.remove( "chip-large" );
+        }
+
+        for ( i = 0; i < 16; i++ ) {
+            currentPositionalIndex = newLocation + bufferChipPositionalIndexAdjustments[i];
+
+            if ( locationHistory.indexOf( currentPositionalIndex ) === -1 ) {
+                //var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                $chipWrapper.innerHTML += newChip;
+                locationHistory.push( currentPositionalIndex );
+            }
         }
 
         for ( i = 0; i < 9; i++ ) {
@@ -141,19 +162,27 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
             if ( i === 4) {
                 chipZindex = "3";
-                chipTransform = "matrix3d( 4, 0, 0.00, 0, 0.00, 4, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
+                chipClass = "chip chip-large";
+                // chipTransform = "matrix3d( 4, 0, 0.00, 0, 0.00, 4, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
+                chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0) scale3d(4, 4, 0) ";
             } else {
                 chipZindex = "2";
-                chipTransform = "matrix3d( 2, 0, 0.00, 0, 0.00, 2, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
+                chipClass = "chip chip-medium";
+                chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0) scale3d(2, 2, 0)";
+                // chipTransform = "matrix3d( 2, 0, 0.00, 0, 0.00, 2, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
             }
+
+            console.log("chipTransform: " + chipTransform);
 
             if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
                 //console.log("it IS in the locationHistory: " + currentPositionalIndex);
                 // var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex ).style.transform = chipTransform;
                 var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex );
-                // thisHereChip.style.transform = chipTransform;
+
                 thisHereChip.style.transform = chipTransform;
-                thisHereChip.style.zIndex = chipZindex;
+                thisHereChip.className = chipClass;
+                //thisHereChip.style.zIndex = chipZindex;
+
                 // if ( i === 4) {
                 //     thisHereChip.style.transform = chipTransform;
                 //     thisHereChip.style.z-index = chipTransform;
@@ -166,7 +195,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 //}
             } else {
                 //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
 
@@ -190,8 +220,11 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         if ( previouslyActiveChipsLength > 0 ) {
             for ( x = 0; x < previouslyActiveChips.length; x++ ) {
                 //console.log("shriking down: " + previouslyActiveChips[ x ]);
-                document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.transform = defaultElementTransform;
-                document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.zIndex = "1";
+                //document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.transform = defaultElementTransform;
+                deactivatedChip = document.getElementById( 'chip' + previouslyActiveChips[ x ] );
+                //deactivatedChip.style.zIndex = "1";
+                deactivatedChip.style.transform = defaultElementTransform;
+                deactivatedChip.className = "chip";
                 // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-medium" );
                 // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-large" );
             }
