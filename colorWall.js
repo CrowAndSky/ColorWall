@@ -28,6 +28,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     $wrapper = document.getElementById( 'wrapper' ),
     wrapperOffset = $( $wrapper ).offset(),
     $wrapperWidth,
+    chipStyleSheet = document.styleSheets[0],
 
     /*--------------------- ### Initially Empty ### ---------------------*/
     locationHistory = [],
@@ -54,6 +55,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se' */
     chipPositionalLeftAdjustments = [],
     chipPositionalTopAdjustments = [],
+    chipPositionalClasses = ['nw','n','ne','w','large','e','sw','s','se'],
     chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
@@ -69,7 +71,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* CLOSE INIT VARIABLES */
 
     setPixelDimensions = function( event ) {
-        var chipStyleSheet = document.styleSheets[0];
         $wrapperWidth = $( $wrapper ).width();
         $( $wrapper ).height( Math.round( $wrapperWidth * 0.56 ));
         $( $mouseListener ).height( Math.round( $wrapperWidth * 0.56 ));
@@ -81,11 +82,17 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         largeChipSize = Math.round( $wrapperWidth / canvasChipXCount * 4 );
         largeChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 ); // should be 1.5?
         largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
-        chipStyleSheet.insertRule( ".chip { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
 
         /* Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se' */
         chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset ];
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset / 4, -largeChipLeftOffset, -mediumChipTopOffset / 4, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
+        chipStyleSheet.insertRule( ".chip { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
+        chipStyleSheet.insertRule( ".chip.chip-medium { transform: translate3d(" + chipPositionalLeftAdjustments[ 0 ] + "px, " + chipPositionalTopAdjustments[ 0 ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+        chipStyleSheet.insertRule( ".chip.chip-large { transform: translate3d(" + chipPositionalLeftAdjustments[ 4 ] + "px, " + chipPositionalTopAdjustments[ 4 ] + "px, 0px) scale3d(4, 4, 1) }", 1 );
+
+        for ( var i = 0; i < 9; i++ ) {
+            chipStyleSheet.insertRule( ".chip.chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+        }
 
     },
 
@@ -136,17 +143,18 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             i,
             x;
 
-        if ( prevActiveIndex >= 0 ) {
-            document.getElementsByClassName("chip-large")[0].classList.remove( "chip-large" );
-        }
+        // if ( prevActiveIndex >= 0 ) {
+        //     document.getElementsByClassName("chip-large")[0].classList.remove( "chip-large" );
+        // }
 
         for ( i = 0; i < 16; i++ ) {
             currentPositionalIndex = newLocation + bufferChipPositionalIndexAdjustments[i];
 
             if ( locationHistory.indexOf( currentPositionalIndex ) === -1 ) {
                 console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
                 //var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
             }
@@ -161,53 +169,63 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             // console.log("currentlyActiveChips adding: " + currentPositionalIndex);
             // console.log(currentlyActiveChips);
 
-            if ( i === 4) {
-                chipZindex = "3";
-                chipClass = "chip chip-large";
-                // chipTransform = "matrix3d( 4, 0, 0.00, 0, 0.00, 4, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
-                chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(4, 4, 1) ";
-            } else {
-                chipZindex = "2";
-                chipClass = "chip chip-medium";
-                chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1)";
-                // chipTransform = "matrix3d( 2, 0, 0.00, 0, 0.00, 2, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
-            }
+            // if ( i === 4) {
+            //     chipZindex = "3";
+            //     chipClass = "chip chip-large";
+            //     // chipTransform = "matrix3d( 4, 0, 0.00, 0, 0.00, 4, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
+            //     chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(4, 4, 1) ";
+            // } else {
+            //     chipZindex = "2";
+            //     chipClass = "chip chip-medium";
+            //     chipTransform = "translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1)";
+            //     // chipTransform = "matrix3d( 2, 0, 0.00, 0, 0.00, 2, 0.00, 0, 0, 0, 1, 0, " + chipPositionalLeftAdjustments[ i ] + ", " + chipPositionalTopAdjustments[ i ] + ", 0, 1)";
+            // }
 
-            console.log("chipTransform: " + chipTransform);
+            //console.log("chipTransform: " + chipTransform);
 
             if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
                 //console.log("it IS in the locationHistory: " + currentPositionalIndex);
                 // var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex ).style.transform = chipTransform;
                 var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex );
+                $('#chip' + currentPositionalIndex).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se')
+                $('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[i]);
 
-                thisHereChip.style.transform = chipTransform;
-                thisHereChip.className = chipClass;
+                // thisHereChip.style.transform = chipTransform;
+                // thisHereChip.className = chipClass;
                 //thisHereChip.style.zIndex = chipZindex;
 
                 // if ( i === 4) {
-                //     thisHereChip.style.transform = chipTransform;
-                //     thisHereChip.style.z-index = chipTransform;
-                //     document.getElementById( 'chip' + currentPositionalIndex ).style.transform = chipTransform;
+                //     // thisHereChip.style.transform = chipTransform;
+                //     // thisHereChip.style.z-index = chipTransform;
+                //     // document.getElementById( 'chip' + currentPositionalIndex ).style.transform = chipTransform;
+                //     thisHereChip.classList.remove( "chip-medium" );
+                //     thisHereChip.classList.add( "chip-large" );
                 //     // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-medium" );
                 //     // document.getElementById( 'chip' + currentPositionalIndex ).classList.add( "chip-large" );
                 // } else {
-                //     document.getElementById( 'chip' + currentPositionalIndex ).classList.add( "chip-medium" );
-                //     document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-large" );
-                //}
+                //     thisHereChip.classList.add( "chip-medium" );
+                //     thisHereChip.classList.remove( "chip-large" );
+                //     // document.getElementById( 'chip' + currentPositionalIndex ).classList.add( "chip-medium" );
+                //     // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-large" );
+                // }
             } else {
                 console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
                 // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
-                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
-                var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
 
                 window.setTimeout( function( thisChipPositionalIndex, thisTransform, thisChipClass ) {
                     return function() {
-                        var thisHereChip = document.getElementById( 'chip' + thisChipPositionalIndex );
-                        thisHereChip.style.transform = thisTransform;
-                        thisHereChip.className = thisChipClass;
-                }; }( currentPositionalIndex, chipTransform, chipClass ), 200);
+                        //var thisHereChip = document.getElementById( 'chip' + thisChipPositionalIndex );
+                        //thisHereChip.style.transform = thisTransform;
+                        //thisHereChip.className = thisChipClass;
+                        //thisHereChip.classList.add( "chip-medium" );
+                        $( '#chip' + thisChipPositionalIndex ).addClass( 'chip-' + thisChipClass );
+                // }; }( currentPositionalIndex, chipTransform, chipClass ), 50);
+                }; }( currentPositionalIndex, chipPositionalClasses[i] ), 50);
             }
 
             prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
@@ -227,10 +245,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 //document.getElementById( 'chip' + previouslyActiveChips[ x ] ).style.transform = defaultElementTransform;
                 deactivatedChip = document.getElementById( 'chip' + previouslyActiveChips[ x ] );
                 //deactivatedChip.style.zIndex = "1";
-                deactivatedChip.style.transform = defaultElementTransform;
-                deactivatedChip.className = "chip";
-                // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-medium" );
-                // document.getElementById( 'chip' + currentPositionalIndex ).classList.remove( "chip-large" );
+                //deactivatedChip.style.transform = defaultElementTransform;
+                //deactivatedChip.className = "chip";
+                deactivatedChip.classList.remove( "chip-medium" );
+                deactivatedChip.classList.remove( "chip-large" );
             }
         }
 

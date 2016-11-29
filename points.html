@@ -18,13 +18,20 @@ body {
 	position: absolute;
     transform-origin: center center 0px;
     /*transform: matrix3d( 1, 0, 0.00, 0, 0.00, 1, 0.00, 0, 0, 0, 1, 0, 0, 0, 0, 1 );*/
-    /*transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 0);*/
-    /*transition: transform 3s;*/
+    transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1);
+    transition: transform 1s;
     /*width: 10px;*/
 	z-index: 1;
 }
 
 .chip-medium {
+    background-color: #cdf;
+    /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
+    z-index: 2;
+}
+
+
+.chip.chip-n, .chip.chip-s, .chip.chip-nw, .chip.chip-w, .chip.chip-sw, .chip.chip-ne, .chip.chip-e, .chip.chip-se {
     background-color: #cdf;
     /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
     z-index: 2;
