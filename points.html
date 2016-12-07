@@ -9,9 +9,9 @@
 body {
 	background-color: #ccc;
 }
-.chip {
-	background-color: #789;
-	border: 1px solid #999;
+#chip-wrapper > div {
+	/*background-color: #789;*/
+	border: 0.25px solid #fff;
     /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
     /*height: 10px;*/
 	opacity: 1;
@@ -23,37 +23,33 @@ body {
     /*width: 10px;*/
 	z-index: 1;
 }
-
+.chip-primer {
+    transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 0.999999999) !important;
+}
 .chip-medium {
-    background-color: #cdf;
-    /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
+    border: 0.5px solid #fff;
+    /*background-color: #cdf;*/
+    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
     z-index: 2;
 }
-
-
 .chip.chip-n, .chip.chip-s, .chip.chip-nw, .chip.chip-w, .chip.chip-sw, .chip.chip-ne, .chip.chip-e, .chip.chip-se {
-    background-color: #cdf;
-    /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
+    /*background-color: #cdf;*/
     z-index: 2;
 }
-
 .chip-large {
-    background-color: #bde;
-    /*box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);*/
+    border: 1px solid #fff;
+    /*background-color: #bde;*/
+    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
     z-index: 3;
 }
-
 #wrapper {
 	background: #efefee;
-	height: 95vh;
 	position: relative;
     width: 1000px;
 }
-
 #console {
 	word-break: break-word;
 }
-
 .grid-overlay,
 #chip-wrapper,
 #mouse-listener {
@@ -64,21 +60,41 @@ body {
 	width: 100%;
     z-index: 1;
 }
-
+#chip-wrapper {
+    z-index: 3;
+}
 #mouse-listener {
 	position: relative;
-	z-index: 2;
+	z-index: 4;
 }
 .grid-overlay {
-	display: none;
+	/*display: none;*/
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 2;
+}
+#color-wall-canvas {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    image-rendering: -moz-crisp-edges;         /* Firefox */
+    image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
 }
 </style>
 
 <div id="wrapper">
+    <img id="color-wall-canvas" src="chipGrid.png" />
 	<svg class="grid-overlay" xmlns="http://www.w3.org/2000/svg">
 		<defs class="svg-defs">
 			<pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-				<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#333333" stroke-width="1"/>
+				<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#ffffff" stroke-width="1"/>
 			</pattern>
 		</defs>
 		<rect width="100%" height="100%" fill="url( #smallGrid )" />
