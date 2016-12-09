@@ -65,7 +65,82 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
     bufferChipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 2, 2, 2 ],
     bufferChipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, 2, -2, 2, -2, 2, -2, -1, 0, 1, 2 ],
-    defaultElementTransform = "translate3d(0px, 0px, 0px) scale3d(1, 1, 1)";
+    defaultElementTransform = "translate3d(0px, 0px, 0px) scale3d(1, 1, 1)",
+
+    /*--------------------- ### Animation Looping ### ---------------------*/
+    chipTransform,
+    currentPositionalIndex,
+    //currentAnimLoopIndex,
+    prevActiveIndex,
+    deactivatedChip,
+    chipClass,
+    chipZindex,
+    previouslyActiveChipsLength,
+    i,
+    x,
+    requestAnimationID,
+    updateOuterChipDOM = function( animLoopIndex ) {
+        if ( animLoopIndex === 15) {
+            //cancelAnimationFrame( requestAnimationID );
+            console.log("should be starting inner loop");
+            requestAnimationID = requestAnimationFrame( updateInnerChipDOM( 0 ) );
+            //updateInnerChipDOM( 0 );
+        } else {
+            currentPositionalIndex = newLocation + bufferChipPositionalIndexAdjustments[ animLoopIndex ];
+
+            if ( locationHistory.indexOf( currentPositionalIndex ) === -1 ) {
+                console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[currentPositionalIndex] + '"></div>';
+                $chipWrapper.innerHTML += newChip;
+                locationHistory.push( currentPositionalIndex );
+            }
+
+            animLoopIndex++;
+            console.log("anim loop: " + animLoopIndex);
+            requestAnimationID = requestAnimationFrame( updateOuterChipDOM( animLoopIndex ) );
+        }
+    },
+    updateInnerChipDOM = function( animLoopIndex ) {
+        if ( animLoopIndex === 9 ) {
+            console.log("should be cancelling");
+            cancelAnimationFrame( requestAnimationID );
+        } else {
+            currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ animLoopIndex ];
+            currentlyActiveChips.push( currentPositionalIndex );
+
+            if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
+                //var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex );
+                $('#chip' + currentPositionalIndex).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se')
+                $('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[ animLoopIndex ]);
+            } else {
+                console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
+                // var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
+                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[currentPositionalIndex] + '"></div>';
+                $chipWrapper.innerHTML += newChip;
+                locationHistory.push( currentPositionalIndex );
+                $( '#chip' + currentPositionalIndex ).addClass( 'chip-primer chip-' + chipPositionalClasses[ animLoopIndex ] );
+                $( '#chip' + currentPositionalIndex ).removeClass( 'chip-primer' );
+
+                // window.setTimeout( function( thisChipPositionalIndex, thisChipClass ) {
+                //     return function() {
+                //         $( '#chip' + thisChipPositionalIndex ).addClass( 'chip-primer chip-' + thisChipClass );
+                //         $( '#chip' + thisChipPositionalIndex ).removeClass( 'chip-primer' );
+                // }; }( currentPositionalIndex, chipPositionalClasses[ animLoopIndex ] ), 500);
+            }
+
+            prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+
+            if ( prevActiveIndex >= 0 ) {
+                previouslyActiveChips.splice( prevActiveIndex, 1 );
+            }
+
+            animLoopIndex++;
+            console.log("anim loop: " + animLoopIndex);
+            requestAnimationID = requestAnimationFrame( updateInnerChipDOM( animLoopIndex ) );
+        }
+    };
 
     /* CLOSE INIT VARIABLES */
 
@@ -127,31 +202,13 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             newLocation - lastLocation
 
         ---*/
-        var chipTransform,
-            currentPositionalIndex,
-            animLoopIndex
-            prevActiveIndex,
-            deactivatedChip,
-            chipClass,
-            chipZindex,
-            previouslyActiveChipsLength,
-            i,
-            x,
-            requestAnimationID,
-            updateOuterChipDOM = function( animLoopIndex ) {
-                console.log("######## animLoopIndex: " + animLoopIndex);
 
-                /* THIS WILL BE THE ACTUAL CHIP UPDTING */
-                if ( animLoopIndex === 15) {
-                    cancelAnimationFrame( requestAnimationID );
-                } else {
-                    animLoopIndex++;
-                    requestAnimationID = requestAnimationFrame( updateOuterChipDOM( animLoopIndex ) );
-                }
+            //currentAnimLoopIndex = 0;
+            //updateOuterChipDOM( 0 );
+            //requestAnimationID = requestAnimationFrame( updateOuterChipDOM( 0 ) );
 
-            };
-
-            updateOuterChipDOM( 0 );
+            // currentAnimLoopIndex = 0;
+            // updateInnerChipDOM( 0 );
 
             /*
         for ( i = 0; i < 16; i++ ) {
@@ -199,19 +256,23 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             }
         } /* END loop to handle newly active chips */
 
-        */
 
-        previouslyActiveChipsLength = previouslyActiveChips.length;
 
-        if ( previouslyActiveChipsLength > 0 ) {
-            for ( x = 0; x < previouslyActiveChips.length; x++ ) {
-                $('#chip' + previouslyActiveChips[ x ]).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se');
-            }
-        }
+        updateInnerChipDOM( 0 );
 
-        previouslyActiveChips.length = 0;
-        previouslyActiveChips = currentlyActiveChips.slice();
-        currentlyActiveChips.length = 0;
+
+
+        // previouslyActiveChipsLength = previouslyActiveChips.length;
+
+        // if ( previouslyActiveChipsLength > 0 ) {
+        //     for ( x = 0; x < previouslyActiveChips.length; x++ ) {
+        //         $('#chip' + previouslyActiveChips[ x ]).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se');
+        //     }
+        // }
+
+        // previouslyActiveChips.length = 0;
+        // previouslyActiveChips = currentlyActiveChips.slice();
+        // currentlyActiveChips.length = 0;
     }; /* CLOSE processLocationChange() */
 
     setPixelDimensions();
