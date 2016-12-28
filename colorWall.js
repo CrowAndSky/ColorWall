@@ -104,11 +104,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     };
 
     var updateInnerChipDOM = function() {
-        //console.log("allColorsLong: " + allColorsLong.length);
         if ( animLoopIndex > 8 ) {
             for ( x = 0; x < newChipsToAnimate.length; x += 2 ) {
-                //console.log("left: " + newChipsToAnimate[ x + 1 ] );
-                // var newChip = '<div id="chip' + newChipsToAnimate[ x ] +'" style="transition:transform 1s;left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ x ] ] + '"></div>';
                 var newChip = '<div id="chip' + newChipsToAnimate[ x ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ x ] ] + '"></div>';
                 $chipWrapper.innerHTML += newChip;
             }
@@ -126,47 +123,38 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             if ( previouslyActiveChipsLength > 0 ) {
                 for ( x = 0; x < previouslyActiveChips.length; x++ ) {
                     console.log("expiring: " + previouslyActiveChips[ x ]);
-                    //$('#chip' + previouslyActiveChips[ x ]).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se');
-                    document.getElementById( '#chip' + previouslyActiveChips[ x ] ).className = "";
+                    document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
                 }
             }
 
-            previouslyActiveChips.length = 0;
-            previouslyActiveChips = currentlyActiveChips.slice();
-            currentlyActiveChips.length = 0;
-            existingChipsToAnimate.length = 0;
+            previouslyActiveChips.length = 0;  /* Reset the previously active chips array */
+            previouslyActiveChips = currentlyActiveChips.slice();  /* Set the previously active chips array to the currently active chips, to be processed with the next position change */
+            currentlyActiveChips.length = 0; /* Reset the currently active chips array */
+            existingChipsToAnimate.length = 0;  /* wwww */
             newChipsToAnimate.length = 0;
 
             console.log("should be cancelling: " + animLoopIndex);
             cancelAnimationFrame( requestAnimationID );
         } else {
-            //console.log("anim loop first: " + animLoopIndex);
             currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ animLoopIndex ];
             currentlyActiveChips.push( currentPositionalIndex );
 
             if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
-                //var thisHereChip = document.getElementById( 'chip' + currentPositionalIndex );
                 existingChipsToAnimate.push( currentPositionalIndex );
                 existingChipsToAnimate.push( chipPositionalClasses[ animLoopIndex ] );
-                // $('#chip' + currentPositionalIndex).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se')
-                // $('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[ animLoopIndex ]);
             } else {
-                //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
-                // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
-                // var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
+                console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
                 newChipsToAnimate.push( currentPositionalIndex );
                 newChipsToAnimate.push( animLoopIndex );
-                // var newChip = '<div id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ currentPositionalIndex ] + '"></div>';
-                // $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
-                //$( '#chip' + currentPositionalIndex ).addClass( "chip-" + chipPositionalClasses[ animLoopIndex ] );
-                //$( '#chip' + currentPositionalIndex ).removeClass( 'chip-primer' );
             }
 
+            /*
+                Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close
+            */
             prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
             if ( prevActiveIndex >= 0 ) {
-                prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+                //prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
                 previouslyActiveChips.splice( prevActiveIndex, 1 );
             }
 
