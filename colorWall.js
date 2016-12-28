@@ -13,11 +13,11 @@ Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 
 2) Attach mousemove listener on the transparent, top level EL which exists just for that purpose, call back function is handleGridCursorMove()
 
 TO DO:
+* Handling for jumping
 * Fix coordinate positioning to be even
 * Prefill next DOM els from any position?
 * Handling for jumping
-* Add colors for testing
-* Add delays for each chip
+* Add any new DOM ELs, then apply classes
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -82,15 +82,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     var updateOuterChipDOM = function( animLoopIndex ) {
         if ( animLoopIndex === 15) {
-            //cancelAnimationFrame( requestAnimationID );
             console.log("should be starting inner loop");
-            requestAnimationID = requestAnimationFrame( updateInnerChipDOM( 0 ) );
-            //updateInnerChipDOM( 0 );
+            animLoopIndex = 0;
+            requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
         } else {
             currentPositionalIndex = newLocation + bufferChipPositionalIndexAdjustments[ animLoopIndex ];
 
             if ( locationHistory.indexOf( currentPositionalIndex ) === -1 ) {
-                console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
                 var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[currentPositionalIndex] + '"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
@@ -103,10 +102,22 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     };
 
     var updateInnerChipDOM = function() {
-        console.log("allColorsLong: " + allColorsLong.length);
+        //console.log("allColorsLong: " + allColorsLong.length);
         if ( animLoopIndex > 8 ) {
             console.log("should be cancelling: " + animLoopIndex);
             cancelAnimationFrame( requestAnimationID );
+
+            previouslyActiveChipsLength = previouslyActiveChips.length;
+
+            if ( previouslyActiveChipsLength > 0 ) {
+                for ( x = 0; x < previouslyActiveChips.length; x++ ) {
+                    $('#chip' + previouslyActiveChips[ x ]).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se');
+                }
+            }
+
+            previouslyActiveChips.length = 0;
+            previouslyActiveChips = currentlyActiveChips.slice();
+            currentlyActiveChips.length = 0;
         } else {
             console.log("anim loop first: " + animLoopIndex);
             currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ animLoopIndex ];
@@ -117,21 +128,15 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 $('#chip' + currentPositionalIndex).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se')
                 $('#chip' + currentPositionalIndex).addClass('chip-' + chipPositionalClasses[ animLoopIndex ]);
             } else {
-                console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
                 // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="z-index:' + chipZindex + ';transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
                 // var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 0.5s;transform:' + defaultElementTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
                 // var newChip = '<div class="' + chipClass + '" id="chip' + currentPositionalIndex +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;"></div>';
-                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[currentPositionalIndex] + '"></div>';
+                var newChip = '<div id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ currentPositionalIndex ] + '"></div>';
                 $chipWrapper.innerHTML += newChip;
                 locationHistory.push( currentPositionalIndex );
-                $( '#chip' + currentPositionalIndex ).addClass( 'chip-primer chip-' + chipPositionalClasses[ animLoopIndex ] );
-                $( '#chip' + currentPositionalIndex ).removeClass( 'chip-primer' );
-
-                // window.setTimeout( function( thisChipPositionalIndex, thisChipClass ) {
-                //     return function() {
-                //         $( '#chip' + thisChipPositionalIndex ).addClass( 'chip-primer chip-' + thisChipClass );
-                //         $( '#chip' + thisChipPositionalIndex ).removeClass( 'chip-primer' );
-                // }; }( currentPositionalIndex, chipPositionalClasses[ animLoopIndex ] ), 500);
+                $( '#chip' + currentPositionalIndex ).addClass( "chip-" + chipPositionalClasses[ animLoopIndex ] );
+                //$( '#chip' + currentPositionalIndex ).removeClass( 'chip-primer' );
             }
 
             prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
@@ -160,10 +165,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
         chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset ];
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset / 4, -largeChipLeftOffset, -mediumChipTopOffset / 4, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
-        chipStyleSheet.insertRule( ".chip { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
+        chipStyleSheet.insertRule( "#chip-wrapper > div { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
 
         for ( var i = 0; i < 9; i++ ) {
-            chipStyleSheet.insertRule( ".chip.chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+            chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
         }
 
         SVGgridMultiplier = $wrapperWidth * 0.02;
@@ -174,20 +179,25 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
+        /*--- TO DO HERE:
+            handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
+            newLocation - lastLocation
+
+        ---*/
         currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
         currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
         newLocation = currentChipRow * 50 + currentChipColumn;
+        console.log("newLocation: " + newLocation);
 
         if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-            //processLocationChange();
             animLoopIndex = 0;
             requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
 
             /*--------------------- ### Once per location update ### ---------------------
                 Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
                 Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
-
-            lastLocation = newLocation;  /* -- So that we're ready for the next new location -
+            */
+            lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
             var locationsToExpireCount = locationHistory.length - 150;
             if ( locationsToExpireCount > 0 ) {
                 for ( var i = locationsToExpireCount; i > 0; i-- ) {
@@ -196,38 +206,15 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     locationHistory.shift();
                 }
             }
-            */
+
         } /* END if ( newLocation !== lastLocation ) */
     }; /* END handleGridCursorMove() */
-
-    var processLocationChange = function( newLocation, lastLocation ) {
-        /* ------------------ ### Start an animation loop or update chip related data ### ------------------*/
-        /*--- TO DO HERE:
-            handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
-            newLocation - lastLocation
-
-        ---*/
-        // requestAnimationID = requestAnimationFrame( updateInnerChipDOM( 0, newLocation, lastLocation ) );
-
-        // previouslyActiveChipsLength = previouslyActiveChips.length;
-
-        // if ( previouslyActiveChipsLength > 0 ) {
-        //     for ( x = 0; x < previouslyActiveChips.length; x++ ) {
-        //         $('#chip' + previouslyActiveChips[ x ]).removeClass('chip-nw chip-n chip-ne chip-w chip-large chip-e chip-sw chip-s chip-se');
-        //     }
-        // }
-
-        // previouslyActiveChips.length = 0;
-        // previouslyActiveChips = currentlyActiveChips.slice();
-        // currentlyActiveChips.length = 0;
-    }; /* CLOSE processLocationChange() */
 
     /* CLOSE INIT VARIABLES */
 
     setPixelDimensions();
 
     $( $mouseListener ).on( "mousemove", _.throttle( handleGridCursorMove, 200 ) );
-    //$( $mouseListener ).on( "mousemove", handleGridCursorMove);
 
 } ); /* CLOSE $( document ).ready */
 

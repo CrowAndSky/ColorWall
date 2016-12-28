@@ -1,0 +1,74 @@
+body {
+    background-color: #ccc;
+  margin: 0;
+  padding: 0;
+}
+#chip-wrapper > div {
+    border: 3px solid #fff;
+  box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+    position: absolute;
+  transform-origin: center center 0px;
+  transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 1);
+  transition: transform 1s;
+    z-index: 1;
+}
+.chip-primer {
+    transform: translate3d(0px, 0px, 0px) scale3d(1, 1, 0.999999999) !important;
+}
+.chip-medium {
+    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+.chip.chip-n, .chip.chip-s, .chip.chip-nw, .chip.chip-w, .chip.chip-sw, .chip.chip-ne, .chip.chip-e, .chip.chip-se {
+    z-index: 2;
+}
+.chip-large {
+    border: 3px solid #fff;
+    box-shadow: 0px 4px 5px rgba(0, 0, 0, 0.2), -5px 4px 7px rgba(0, 0, 0, 0.2), 5px 4px 7px rgba(0, 0, 0, 0.2);
+    z-index: 3;
+}
+#wrapper {
+    background: #efefee;
+    position: relative;
+  width: 1000px;
+}
+#console {
+    word-break: break-word;
+}
+.grid-overlay,
+#chip-wrapper,
+#mouse-listener {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+}
+#chip-wrapper {
+    z-index: 3;
+}
+#mouse-listener {
+    position: relative;
+    z-index: 4;
+}
+.grid-overlay {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 2;
+}
+#color-wall-canvas {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  image-rendering: -moz-crisp-edges;         /* Firefox */
+  image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
+}
