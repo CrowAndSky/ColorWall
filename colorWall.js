@@ -1,23 +1,22 @@
 'use strict';
-
 $( document ).ready(  function(){
-/* ------------------ ### Important Objects ### ------------------
-newLocation, currentPositionalIndex: Unique 2D location indexes calculated by row number * 100 + column number
-    This will only work, of course, if there are less than 100 columns
-Chip positonal arrays are ordered as such: 'nw', 'n', 'ne', 'w', 'active', 'e', 'sw', 's', 'se', 'default Chip'
-    and the positional index adjustments are: -101, -100, -99, -1, 0, 1, 99, 100, 101
-*/
-
-/* ------------------ ### How the Whole Thing Works ( at a glance ) ### ------------------
-1) Call setPixelDimensions() sets JS vars based on DOM dimensions
-2) Attach mousemove listener on the transparent, top level EL which exists just for that purpose, call back function is handleGridCursorMove()
-
+/*
 TO DO:
 * Handling for jumping
-* Fix coordinate positioning to be even
-* Prefill next DOM els from any position?
-* Handling for jumping
-* Add any new DOM ELs, then apply classes
+* figure out how to add this:
+    DOMmutationObserver.disconnect();
+
+* add priming class on new chip and when it is first created and becomes active. this class has:
+    the default 3D transform (taking it off of tother chips)
+    the drop shadow
+        make the drop shadow on a pseudclass whose opacity animates in (and changes size as well)
+    the border (if I add it back)
+
+    remove the prime class from all ELs via a timeout after the animation period
+
+OTHER THINGS TO TRY:
+    prune the DOM much faster
+    have the whole DOM there
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -27,7 +26,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     cwGridPatternPath = $('#smallGrid path'),
     SVGgridMultiplier,
     $chipWrapper = document.getElementById( 'chip-wrapper' ),
-    //$console = document.getElementById( 'console' ),
     $wrapper = document.getElementById( 'wrapper' ),
     wrapperOffset = $( $wrapper ).offset(),
     $wrapperWidth,
@@ -64,10 +62,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
-    bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
-    bufferChipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 2, 2, 2 ],
-    bufferChipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, 2, -2, 2, -2, 2, -2, -1, 0, 1, 2 ],
-    defaultElementTransform = "translate3d(0px, 0px, 0px) scale3d(1, 1, 1)",
+    // bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
+    // bufferChipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 2, 2, 2 ],
+    // bufferChipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, 2, -2, 2, -2, 2, -2, -1, 0, 1, 2 ],
+    //defaultElementTransform = "translate3d(0px, 0px, 0px) scale3d(1, 1, 1)",
 
     /*--------------------- ### Animation Looping ### ---------------------*/
     chipTransform,
@@ -78,12 +76,11 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipClass,
     chipZindex,
     previouslyActiveChipsLength,
-    lastNewChipWasAddedtoDOM = false,
+    lastNewChipWasAddedtoDOM = true,
+    updateLoopMax,
     DOMmutationObserver = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
-        console.log("MUTATION");
         lastNewChipWasAddedtoDOM = true;
-        console.log(mutation.type);
       });
     }),
     DOMmutationObserverConfig = { childList: true },
@@ -91,30 +88,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     x,
     requestAnimationID;
 
-    var updateOuterChipDOM = function( animLoopIndex ) {
-        if ( animLoopIndex === 15) {
-            console.log("should be starting inner loop");
-            animLoopIndex = 0;
-            requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
-        } else {
-            currentPositionalIndex = newLocation + bufferChipPositionalIndexAdjustments[ animLoopIndex ];
-
-            if ( locationHistory.indexOf( currentPositionalIndex ) === -1 ) {
-                //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transition:transform 1s;left:' + ( currentChipColumn + bufferChipPositionalColumnAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;top:' + ( currentChipRow + bufferChipPositionalRowAdjustments[ animLoopIndex ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[currentPositionalIndex] + '"></div>';
-                $chipWrapper.innerHTML += newChip;
-                locationHistory.push( currentPositionalIndex );
-            }
-
-            animLoopIndex++;
-            console.log("anim loop: " + animLoopIndex);
-            requestAnimationID = requestAnimationFrame( updateOuterChipDOM( animLoopIndex ) );
-        }
-    };
-
     var updateInnerChipDOM = function() {
         if ( lastNewChipWasAddedtoDOM ) {
-            if ( animLoopIndex === newChipsToAnimate.length ) {
+            if ( animLoopIndex >= newChipsToAnimate.length ) {
                 for ( x = 0; x < existingChipsToAnimate.length; x += 2 ) {
                     document.getElementById( 'chip' + existingChipsToAnimate[ x ] ).className = 'chip-' + existingChipsToAnimate[ x + 1 ];
                 }
@@ -126,7 +102,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 previouslyActiveChipsLength = previouslyActiveChips.length;
 
                 if ( previouslyActiveChipsLength > 0 ) {
-                    for ( x = 0; x < previouslyActiveChips.length; x++ ) {
+                    for ( x = 0; x < previouslyActiveChipsLength; x++ ) {
                         console.log("expiring: " + previouslyActiveChips[ x ]);
                         document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
                     }
@@ -137,106 +113,21 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 currentlyActiveChips.length = 0; /* Reset the currently active chips array */
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
-
                 console.log("should be cancelling: " + animLoopIndex);
                 cancelAnimationFrame( requestAnimationID );
             } else {
                 lastNewChipWasAddedtoDOM = false;
-                /* SET WATCHER
-                TO MAKE lastNewChipWasAddedtoDOM = true; when addeed
-                */
-                // select the target node
-
-                // // create an observer instance
-                // DOMmutationObserver = new MutationObserver(function(mutations) {
-                //   mutations.forEach(function(mutation) {
-                //     console.log("MUTATION");
-                //     lastNewChipWasAddedtoDOM = false;
-                //     console.log(mutation.type);
-                //   });
-                // });
-
-                // //DOMmutationObserverConfig = { attributes: true, childList: true, characterData: true };
-                // DOMmutationObserverConfig = { childList: true };
-
-                // // pass in the target node, as well as the observer options
-                // DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-
-                // // later, you can stop observing
-                // //DOMmutationObserver.disconnect();
-
-
-                var newChip = '<div id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ animLoopIndex ] ] + '"></div>';
+                console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
+                var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ animLoopIndex ] ] + '"></div>';
                 $chipWrapper.innerHTML += newChip;
-                animLoopIndex += 2;
                 console.log("anim loop: " + animLoopIndex);
+                animLoopIndex += 2;
                 requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
             }
         } else {
             requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
         }
     };  /* CLOSE updateInnerChipDOM */
-
-    var prepDOMupdates = function() {
-        //if ( animLoopIndex > 8 ) {
-            // for ( x = 0; x < newChipsToAnimate.length; x += 2 ) {
-            //     // var newChip = '<div id="chip' + newChipsToAnimate[ x ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ x + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ x ] ] + '"></div>';
-            //     // $chipWrapper.innerHTML += newChip;
-            // }
-
-            // for ( x = 0; x < existingChipsToAnimate.length; x += 2 ) {
-            //     document.getElementById( 'chip' + existingChipsToAnimate[ x ] ).className = 'chip-' + existingChipsToAnimate[ x + 1 ];
-            // }
-
-            // for ( x = 0; x < newChipsToAnimate.length; x += 2 ) {
-            //     document.getElementById( 'chip' + newChipsToAnimate[ x ] ).className = 'chip-' + chipPositionalClasses[ newChipsToAnimate[ x + 1 ] ];
-            // }
-
-            // previouslyActiveChipsLength = previouslyActiveChips.length;
-
-            // if ( previouslyActiveChipsLength > 0 ) {
-            //     for ( x = 0; x < previouslyActiveChips.length; x++ ) {
-            //         console.log("expiring: " + previouslyActiveChips[ x ]);
-            //         document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
-            //     }
-            // }
-
-            // previouslyActiveChips.length = 0;  /* Reset the previously active chips array */
-            // previouslyActiveChips = currentlyActiveChips.slice();  /* Set the previously active chips array to the currently active chips, to be processed with the next position change */
-            // currentlyActiveChips.length = 0; /* Reset the currently active chips array */
-            // existingChipsToAnimate.length = 0;  /* wwww */
-            // newChipsToAnimate.length = 0;
-
-            // console.log("should be cancelling: " + animLoopIndex);
-            // cancelAnimationFrame( requestAnimationID );
-        //} else {
-            // currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ animLoopIndex ];
-            // currentlyActiveChips.push( currentPositionalIndex );
-
-            // if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
-            //     existingChipsToAnimate.push( currentPositionalIndex );
-            //     existingChipsToAnimate.push( chipPositionalClasses[ animLoopIndex ] );
-            // } else {
-            //     console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-            //     newChipsToAnimate.push( currentPositionalIndex );
-            //     newChipsToAnimate.push( animLoopIndex );
-            //     locationHistory.push( currentPositionalIndex );
-            // }
-
-            // /*
-            //     Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close
-            // */
-            // prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-            // if ( prevActiveIndex >= 0 ) {
-            //     //prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-            //     previouslyActiveChips.splice( prevActiveIndex, 1 );
-            // }
-
-            // animLoopIndex++;
-            // console.log("anim loop: " + animLoopIndex);
-            // requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
-        //}
-    };
 
     var setPixelDimensions = function( event ) {
         $wrapperWidth = $( $wrapper ).width();
@@ -250,12 +141,16 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         largeChipSize = Math.round( $wrapperWidth / canvasChipXCount * 4 );
         largeChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 ); // should be 1.5?
         largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
-        chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, -mediumChipLeftOffset / 4, mediumChipLeftOffset ];
-        chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset / 4, -largeChipLeftOffset, -mediumChipTopOffset / 4, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
+        chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset ];
+        chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
         chipStyleSheet.insertRule( "#chip-wrapper > div { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
 
         for ( var i = 0; i < 9; i++ ) {
-            chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+            if ( i === 4 ) {
+                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(4, 4, 1) }", 1 );
+            } else {
+                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+            }
         }
 
         SVGgridMultiplier = $wrapperWidth * 0.02;
@@ -290,61 +185,29 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     newChipsToAnimate.push( x );
                     locationHistory.push( currentPositionalIndex );
                 }
+
+                /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
+                prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+                if ( prevActiveIndex >= 0 ) {
+                    previouslyActiveChips.splice( prevActiveIndex, 1 );
+                }
             }
 
-            /*
-                Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close
-            */
-            prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-            if ( prevActiveIndex >= 0 ) {
-                //prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-                previouslyActiveChips.splice( prevActiveIndex, 1 );
-            }
+            // if ( existingChipsToAnimate.length > newChipsToAnimate.length ) {
+            //     updateLoopMax = existingChipsToAnimate.length;
+            // } else {
+            //     updateLoopMax = newChipsToAnimate.length;
+            // }
 
-            // create an observer instance
-            // DOMmutationObserver = new MutationObserver(function(mutations) {
-            //   mutations.forEach(function(mutation) {
-            //     console.log("MUTATION");
-            //     lastNewChipWasAddedtoDOM = true;
-            //     console.log(mutation.type);
-            //   });
-            // });
-
-            // //DOMmutationObserverConfig = { attributes: true, childList: true, characterData: true };
-            // DOMmutationObserverConfig = { childList: true };
-
-            // pass in the target node, as well as the observer options
-            DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
+            // /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
+            // prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+            // if ( prevActiveIndex >= 0 ) {
+            //     previouslyActiveChips.splice( prevActiveIndex, 1 );
+            // }
 
             animLoopIndex = 0;
             requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
-
-            // later, you can stop observing
-
-            console.log("should now be done with updates");
-            DOMmutationObserver.disconnect();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            // console.log("should now be done with updates");
             /*--------------------- ### Once per location update ### ---------------------
                 Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
                 Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
@@ -366,18 +229,13 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     setPixelDimensions();
 
-    $( $mouseListener ).on( "mousemove", _.throttle( handleGridCursorMove, 500 ) );
+    DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
+
+    $( $mouseListener ).on( "mousemove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
 
 
 /* ------------------ ### GENERAL STUFF ### ------------------
-
-
-//var newChip = '<div class="chip" id="chip' + currentPositionalIndex +'" style="transform:' + thisTransform + ';left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ i ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ i ] ) * smallChipSize + 'px;"></div>';
-
-thisTransform = "matrix3d( X scale, 0, 0.00, 0, 0.00, Y scale, 0.00, 0, 0, 0, 1, 0, X translate, Y translate, 0, 1);
-                // 'translate3d(' + thisHorizTransform + 'px, ' + thisVertTransform  + 'px, 0px)'
-                // var newChip = $( '<div class="chip" id="chip' + currentChipPositionalIndex +'" style="transform: translate3d(' + thisHorizTransform + 'px, ' + thisVertTransform  + 'px, 0px);left:' + window.currentChipColumn * smallChipSize + 'px;top:' + window.currentChipRow * smallChipSize + 'px;"></div>' );
 
      ------------------ ###### ---------------------*/

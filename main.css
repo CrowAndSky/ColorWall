@@ -1,26 +1,27 @@
 body {
-  background-color: #ccc;
+  background-color: #fff;
   margin: 0;
   padding: 0;
 }
 #chip-wrapper > div {
+  /*border: 1px solid #fff;*/
+  box-shadow: 0px 4px 5px rgba( 0, 0, 0, 0.2 ), -5px 4px 7px rgba( 0, 0, 0, 0.2 ), 5px 4px 7px rgba( 0, 0, 0, 0.2 );
   opacity: 0;
   position: absolute;
   transform-origin: center center 0px;
   transform: translate3d( 0px, 0px, 0px ) scale3d( 1, 1, 1 );
-  transition: opacity 5s, transform 5s;
+  transition: transform 1s;
   z-index: 1;
 }
-.chip-n, .chip-s, .chip-nw, .chip-w, .chip-sw, .chip-ne, .chip-e, .chip-se, .chip-large {
-  border: 1px solid #fff;
-  box-shadow: 0px 4px 5px rgba( 0, 0, 0, 0.2 ), -5px 4px 7px rgba( 0, 0, 0, 0.2 ), 5px 4px 7px rgba( 0, 0, 0, 0.2 );
+#chip-wrapper .chip-n, #chip-wrapper .chip-s, #chip-wrapper .chip-nw, #chip-wrapper .chip-w, #chip-wrapper .chip-sw, #chip-wrapper .chip-ne, #chip-wrapper .chip-e, #chip-wrapper .chip-se, #chip-wrapper .chip-large {
   opacity: 1;
   z-index: 2;
 }
-.chip-large {
-    /*border: 3px solid #fff;
-    box-shadow: 0px 4px 5px rgba( 0, 0, 0, 0.2 ), -5px 4px 7px rgba( 0, 0, 0, 0.2 ), 5px 4px 7px rgba( 0, 0, 0, 0.2 );*/
-    z-index: 3;
+.chip-priming {
+  opacity: 0;
+}
+#chip-wrapper .chip-large {
+  z-index: 3;
 }
 #wrapper {
     background: #efefee;
