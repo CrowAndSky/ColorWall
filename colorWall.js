@@ -59,7 +59,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalLeftAdjustments = [],
     chipPositionalTopAdjustments = [],
     chipPositionalClasses = ['nw','n','ne','w','large','e','sw','s','se'],
-    chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
+    //chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
+    chipPositionalIndexAdjustments = [-51,-50,-49,-1,0,1,49,50,51],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
     // bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
@@ -103,7 +104,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
                 if ( previouslyActiveChipsLength > 0 ) {
                     for ( x = 0; x < previouslyActiveChipsLength; x++ ) {
-                        console.log("expiring: " + previouslyActiveChips[ x ]);
+                        //console.log("expiring: " + previouslyActiveChips[ x ]);
                         document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
                     }
                 }
@@ -113,14 +114,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 currentlyActiveChips.length = 0; /* Reset the currently active chips array */
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
-                console.log("should be cancelling: " + animLoopIndex);
+                //console.log("should be cancelling: " + animLoopIndex);
                 cancelAnimationFrame( requestAnimationID );
             } else {
                 lastNewChipWasAddedtoDOM = false;
-                console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
+                //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
                 var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:#' + allColorsLong[ newChipsToAnimate[ animLoopIndex ] ] + '"></div>';
                 $chipWrapper.innerHTML += newChip;
-                console.log("anim loop: " + animLoopIndex);
+                //console.log("anim loop: " + animLoopIndex);
                 animLoopIndex += 2;
                 requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
             }
@@ -192,18 +193,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     previouslyActiveChips.splice( prevActiveIndex, 1 );
                 }
             }
-
-            // if ( existingChipsToAnimate.length > newChipsToAnimate.length ) {
-            //     updateLoopMax = existingChipsToAnimate.length;
-            // } else {
-            //     updateLoopMax = newChipsToAnimate.length;
-            // }
-
-            // /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
-            // prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-            // if ( prevActiveIndex >= 0 ) {
-            //     previouslyActiveChips.splice( prevActiveIndex, 1 );
-            // }
 
             animLoopIndex = 0;
             requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
