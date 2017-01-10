@@ -1,21 +1,12 @@
 'use strict';
-$( document ).ready(  function(){
+$( document ).ready( function() {
 /*
 TO DO:
-* Handling for jumping
-* figure out how to add this:
-    DOMmutationObserver.disconnect();
-
-* add priming class on new chip and when it is first created and becomes active. this class has:
-    the default 3D transform (taking it off of tother chips)
-    the drop shadow
-        make the drop shadow on a pseudclass whose opacity animates in (and changes size as well)
-    the border (if I add it back)
-
-    remove the prime class from all ELs via a timeout after the animation period
-
-OTHER THINGS TO TRY:
-    prune the DOM much faster
+* use S-W colors from JSON
+* add documensation
+* correct main chip asize
+* adjust an animate drop shadows
+* add throttling optimizations
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -58,7 +49,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalLeftAdjustments = [],
     chipPositionalTopAdjustments = [],
     chipPositionalClasses = ['nw','n','ne','w','large','e','sw','s','se'],
-    //chipPositionalIndexAdjustments = [-101,-100,-99,-1,0,1,99,100,101],
     chipPositionalIndexAdjustments = [-51,-50,-49,-1,0,1,49,50,51],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
@@ -78,6 +68,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     lastUnProcessedLocation = '',
     buildingInnerDOM = false,
     lastNewChipWasAddedtoDOM = true,
+    queuedCursorMoveTimeout,
     updateLoopMax,
     DOMmutationObserver = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
@@ -163,18 +154,19 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
-        console.log("event:");
-        console.log(event);
-
-        if ( lastUnProcessedLocation ) {
-            newLocation = lastUnProcessedLocation;
-        } else {
+        if ( event ) {
+            //console.log("unprocessed location: " + lastUnProcessedLocation);
+            console.log("passed event");
+            //console.log( event );
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
             newLocation = currentChipRow * 50 + currentChipColumn;
+        } else {
+            newLocation = lastUnProcessedLocation;
+            console.log("no event passsed");
         }
 
-        console.log("currentChipColumn: " + currentChipColumn + "     currentChipRow: " + currentChipRow);
+        // console.log("currentChipColumn: " + currentChipColumn + "     currentChipRow: " + currentChipRow);
 
         if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
             if ( !buildingInnerDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
@@ -183,10 +175,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 ---*/
 
                 console.log("newLocation: " + newLocation);
-
-                // if ( handleGridCursorMove ) {
-                //     newLocation = lastUnProcessedLocation;
-                // }
 
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
                     buildingInnerDOM = true;
@@ -231,8 +219,25 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
                 } /* END if ( newLocation !== lastLocation ) */
             } else {
-                lastUnProcessedLocation = newLocation;
-                requestAnimationID = requestAnimationFrame( handleGridCursorMove );
+                // currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
+                // currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
+                // lastUnProcessedLocation = currentChipRow * 50 + currentChipColumn;
+                if ( newLocation !== lastUnProcessedLocation ) {
+                    lastUnProcessedLocation = newLocation;
+                    window.clearTimeout(queuedCursorMoveTimeout);
+                    queuedCursorMoveTimeout = window.setTimeout( function() {
+                        window.queuedMove = true;
+                        console.log("fired timeout");
+                        handleGridCursorMove(null);
+                    }, 2000);
+                }
+
+                //requestAnimationID = requestAnimationFrame( handleGridCursorMove( null ) );
+                // queuedCursorMoveTimeout = window.setTimeout( function() {
+                //     window.queuedMove = true;
+                //     console.log("fired timeout");
+                //     handleGridCursorMove(null);
+                //     }, 2000);
             } /* END test for currently building DOM */
         } /* END test for moving to edge */
     }; /* END handleGridCursorMove() */
@@ -249,5 +254,17 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
 
 /* ------------------ ### GENERAL STUFF ### ------------------
+Nice TO Do
+
+* figure out how to add this:
+    DOMmutationObserver.disconnect();
+
+* add priming class on new chip and when it is first created and becomes active. this class has:
+    the default 3D transform (taking it off of tother chips)
+    the drop shadow
+        make the drop shadow on a pseudclass whose opacity animates in (and changes size as well)
+    the border (if I add it back)
+
+    remove the prime class from all ELs via a timeout after the animation period
 
      ------------------ ###### ---------------------*/
