@@ -62,7 +62,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalIndexAdjustments = [-51,-50,-49,-1,0,1,49,50,51],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
-    // bufferChipPositionalIndexAdjustments = [-202, -201, -200, -199, -198, -102, -98, -2, 2, 98, 102, 198, 199, 200, 201, 202],
+    // bufferChipPositionalIndexAdjustments = [-102, -101, -100, -99, -98, -52, -48, -2, 2, 48, 52, 98, 99, 100, 101, 102],
     // bufferChipPositionalRowAdjustments = [ -2, -2, -2, -2, -2, -1, -1, 0, 0, 1, 1, 2, 2, 2, 2, 2 ],
     // bufferChipPositionalColumnAdjustments = [ -2, -1, 0, 1, 2, -2, 2, -2, 2, -2, 2, -2, -1, 0, 1, 2 ],
 
@@ -75,6 +75,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipClass,
     chipZindex,
     previouslyActiveChipsLength,
+    lastUnProcessedLocation = '',
     buildingInnerDOM = false,
     lastNewChipWasAddedtoDOM = true,
     updateLoopMax,
@@ -162,63 +163,78 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
-        if ( !buildingInnerDOM ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-            /*--- TO DO HERE:
-                handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
-                newLocation - lastLocation
+        console.log("event:");
+        console.log(event);
 
-            ---*/
+        if ( lastUnProcessedLocation ) {
+            newLocation = lastUnProcessedLocation;
+        } else {
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
             newLocation = currentChipRow * 50 + currentChipColumn;
-            console.log("newLocation: " + newLocation);
-
-            if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-                buildingInnerDOM = true;
-
-                for ( x = 0; x < 9; x++ ) {
-                    currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ x ];
-                    currentlyActiveChips.push( currentPositionalIndex );
-
-                    if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
-                        existingChipsToAnimate.push( currentPositionalIndex );
-                        existingChipsToAnimate.push( chipPositionalClasses[ x ] );
-                    } else {
-                        console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                        newChipsToAnimate.push( currentPositionalIndex );
-                        newChipsToAnimate.push( x );
-                        locationHistory.push( currentPositionalIndex );
-                    }
-
-                    /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
-                    prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-                    if ( prevActiveIndex >= 0 ) {
-                        previouslyActiveChips.splice( prevActiveIndex, 1 );
-                    }
-                }
-
-                animLoopIndex = 0;
-                requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
-                // console.log("should now be done with updates");
-                /*--------------------- ### Once per location update ### ---------------------
-                    Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                    Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
-                */
-                lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
-                var locationsToExpireCount = locationHistory.length - 150;
-                if ( locationsToExpireCount > 0 ) {
-                    for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                        var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                        element.parentNode.removeChild(element);
-                        locationHistory.shift();
-                    }
-                }
-
-            } /* END if ( newLocation !== lastLocation ) */
-        } else {
-            requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
-            // store new move to test later
         }
+
+        console.log("currentChipColumn: " + currentChipColumn + "     currentChipRow: " + currentChipRow);
+
+        if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
+            if ( !buildingInnerDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
+                /*--- TO DO HERE:
+                    handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
+                ---*/
+
+                console.log("newLocation: " + newLocation);
+
+                // if ( handleGridCursorMove ) {
+                //     newLocation = lastUnProcessedLocation;
+                // }
+
+                if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
+                    buildingInnerDOM = true;
+
+                    for ( x = 0; x < 9; x++ ) {
+                        currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ x ];
+                        currentlyActiveChips.push( currentPositionalIndex );
+
+                        if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
+                            existingChipsToAnimate.push( currentPositionalIndex );
+                            existingChipsToAnimate.push( chipPositionalClasses[ x ] );
+                        } else {
+                            //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                            newChipsToAnimate.push( currentPositionalIndex );
+                            newChipsToAnimate.push( x );
+                            locationHistory.push( currentPositionalIndex );
+                        }
+
+                        /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
+                        prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+                        if ( prevActiveIndex >= 0 ) {
+                            previouslyActiveChips.splice( prevActiveIndex, 1 );
+                        }
+                    }
+
+                    animLoopIndex = 0;
+                    requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
+                    // console.log("should now be done with updates");
+                    /*--------------------- ### Once per location update ### ---------------------
+                        Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
+                        Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
+                    */
+                    lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
+                    var locationsToExpireCount = locationHistory.length - 150;
+                    if ( locationsToExpireCount > 0 ) {
+                        for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                            var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                            element.parentNode.removeChild(element);
+                            locationHistory.shift();
+                        }
+                    }
+
+                } /* END if ( newLocation !== lastLocation ) */
+            } else {
+                lastUnProcessedLocation = newLocation;
+                requestAnimationID = requestAnimationFrame( handleGridCursorMove );
+            } /* END test for currently building DOM */
+        } /* END test for moving to edge */
     }; /* END handleGridCursorMove() */
 
     /* CLOSE INIT VARIABLES */
