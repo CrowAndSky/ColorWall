@@ -6,7 +6,6 @@ TO DO:
 * add documensation
 * correct main chip asize
 * adjust an animate drop shadows
-* add throttling optimizations
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -84,19 +83,30 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         if ( lastNewChipWasAddedtoDOM ) {
             if ( animLoopIndex >= newChipsToAnimate.length ) {
                 for ( x = 0; x < existingChipsToAnimate.length; x += 2 ) {
-                    document.getElementById( 'chip' + existingChipsToAnimate[ x ] ).className = 'chip-' + existingChipsToAnimate[ x + 1 ];
+                    try {
+                        document.getElementById( 'chip' + existingChipsToAnimate[ x ] ).className = 'chip-' + existingChipsToAnimate[ x + 1 ];
+                    } catch(e) {
+                        console.error( "Failed to find chip " + previouslyActiveChips[ x ] );
+                    }
                 }
 
                 for ( x = 0; x < newChipsToAnimate.length; x += 2 ) {
-                    document.getElementById( 'chip' + newChipsToAnimate[ x ] ).className = 'chip-' + chipPositionalClasses[ newChipsToAnimate[ x + 1 ] ];
+                    try {
+                        document.getElementById( 'chip' + newChipsToAnimate[ x ] ).className = 'chip-' + chipPositionalClasses[ newChipsToAnimate[ x + 1 ] ];
+                    } catch(e) {
+                        console.error( "Failed to find chip " + previouslyActiveChips[ x ] );
+                    }
                 }
 
                 previouslyActiveChipsLength = previouslyActiveChips.length;
 
                 if ( previouslyActiveChipsLength > 0 ) {
                     for ( x = 0; x < previouslyActiveChipsLength; x++ ) {
-                        //console.log("expiring: " + previouslyActiveChips[ x ]);
-                        document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
+                        try {
+                            document.getElementById( 'chip' + previouslyActiveChips[ x ] ).className = "";
+                        } catch(e) {
+                            console.error( "Failed to find chip " + previouslyActiveChips[ x ] );
+                        }
                     }
                 }
 
@@ -155,26 +165,20 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
         if ( event ) {
-            //console.log("unprocessed location: " + lastUnProcessedLocation);
-            console.log("passed event");
+            //console.log("passed event");
             //console.log( event );
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
             newLocation = currentChipRow * 50 + currentChipColumn;
         } else {
             newLocation = lastUnProcessedLocation;
-            console.log("no event passsed");
+            //console.log("no event passsed");
         }
-
         // console.log("currentChipColumn: " + currentChipColumn + "     currentChipRow: " + currentChipRow);
-
         if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
             if ( !buildingInnerDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-                /*--- TO DO HERE:
-                    handle when throttling has cuased us to skip a chip and we need to wind donw the last location, using thse params:
-                ---*/
-
-                console.log("newLocation: " + newLocation);
+                window.queuedMove = false;
+                //console.log("newLocation: " + newLocation);
 
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
                     buildingInnerDOM = true;
@@ -219,25 +223,17 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
                 } /* END if ( newLocation !== lastLocation ) */
             } else {
-                // currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
-                // currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
-                // lastUnProcessedLocation = currentChipRow * 50 + currentChipColumn;
                 if ( newLocation !== lastUnProcessedLocation ) {
                     lastUnProcessedLocation = newLocation;
                     window.clearTimeout(queuedCursorMoveTimeout);
+                    window.queuedMove = true;
                     queuedCursorMoveTimeout = window.setTimeout( function() {
-                        window.queuedMove = true;
-                        console.log("fired timeout");
-                        handleGridCursorMove(null);
-                    }, 2000);
+                        if ( window.queuedMove ) {
+                            console.log("fired timeout");
+                            handleGridCursorMove(null);
+                        }
+                    }, 500);
                 }
-
-                //requestAnimationID = requestAnimationFrame( handleGridCursorMove( null ) );
-                // queuedCursorMoveTimeout = window.setTimeout( function() {
-                //     window.queuedMove = true;
-                //     console.log("fired timeout");
-                //     handleGridCursorMove(null);
-                //     }, 2000);
             } /* END test for currently building DOM */
         } /* END test for moving to edge */
     }; /* END handleGridCursorMove() */
@@ -247,6 +243,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     setPixelDimensions();
 
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
+
+    window.queuedMove = false;
 
     $( $mouseListener ).on( "mousemove", _.throttle( handleGridCursorMove, 100 ) );
 
