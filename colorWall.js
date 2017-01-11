@@ -246,7 +246,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     window.queuedMove = false;
 
-    $( $mouseListener ).on( "mousemove", _.throttle( handleGridCursorMove, 100 ) );
+    $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
 
