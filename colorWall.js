@@ -165,6 +165,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
         if ( event ) {
+            console.log("#### 1");
             event = event.originalEvent;
             event.preventDefault();
             //console.log("passed event");
