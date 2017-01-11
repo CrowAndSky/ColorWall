@@ -166,6 +166,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     var handleGridCursorMove = function( event ) {
         if ( event ) {
             event = event.originalEvent;
+            event.preventDefault();
             //console.log("passed event");
             //console.log( event );
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
