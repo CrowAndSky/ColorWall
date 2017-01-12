@@ -118,6 +118,25 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 buildingInnerDOM = false;
                 //console.log("should be cancelling: " + animLoopIndex);
                 cancelAnimationFrame( requestAnimationID );
+
+                /*--------------------- ### Once per location update ### ---------------------
+                        Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
+                        Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
+                    */
+                    lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
+
+                    // ( function(a){
+                        setTimeout(function () {
+                            var locationsToExpireCount = locationHistory.length - 150;
+                            if ( locationsToExpireCount > 0 && !buildingInnerDOM ) {
+                                console.log("timeout expiring els");
+                                for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                                    var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                                    element.parentNode.removeChild(element);
+                                    locationHistory.shift();
+                                }
+                            }
+                        }, 1000);
             } else {
                 lastNewChipWasAddedtoDOM = false;
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
@@ -165,7 +184,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
         if ( event ) {
-            console.log("#### 1");
+            console.log("#### 2");
             event = event.originalEvent;
             event.preventDefault();
             //console.log("passed event");
@@ -210,19 +229,34 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     animLoopIndex = 0;
                     requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
                     // console.log("should now be done with updates");
-                    /*--------------------- ### Once per location update ### ---------------------
-                        Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                        Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
-                    */
-                    lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
-                    var locationsToExpireCount = locationHistory.length - 150;
-                    if ( locationsToExpireCount > 0 ) {
-                        for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                            var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                            element.parentNode.removeChild(element);
-                            locationHistory.shift();
-                        }
-                    }
+                    // /*--------------------- ### Once per location update ### ---------------------
+                    //     Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
+                    //     Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
+                    // */
+                    // lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
+
+                    // // ( function(a){
+                    //     setTimeout(function () {
+                    //         var locationsToExpireCount = locationHistory.length - 150;
+                    //         if ( locationsToExpireCount > 0 ) {
+                    //             console.log("timeout expiring els");
+                    //             for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                    //                 var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                    //                 element.parentNode.removeChild(element);
+                    //                 locationHistory.shift();
+                    //             }
+                    //         }
+                    //     }, 1000);
+                    // }( a ) );
+
+                    // var locationsToExpireCount = locationHistory.length - 150;
+                    // if ( locationsToExpireCount > 0 ) {
+                    //     for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                    //         var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                    //         element.parentNode.removeChild(element);
+                    //         locationHistory.shift();
+                    //     }
+                    // }
 
                 } /* END if ( newLocation !== lastLocation ) */
             } else {
