@@ -25,6 +25,7 @@ body {
 }
 #wrapper {
   background: #efefee;
+  height: 587px;
   position: relative;
   width: 1049px;
 }
