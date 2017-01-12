@@ -184,7 +184,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
         if ( event ) {
-            console.log("#### 2");
             event = event.originalEvent;
             event.preventDefault();
             //console.log("passed event");
@@ -283,7 +282,11 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     window.queuedMove = false;
 
-    $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
+    console.log("#### 4");
+
+    //$( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
+
+    $( $mouseListener ).on( "mousemove touchmove", handleGridCursorMove );
 
 } ); /* CLOSE $( document ).ready */
 
