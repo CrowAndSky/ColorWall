@@ -2,21 +2,13 @@
 <html>
 <head lang="en">
 	<meta charset="UTF-8">
-	<title>Color Wall 2.0 POC - Points</title>
+	<title>Color Wall 2.0 POC</title>
   <link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
 
 <div id="wrapper">
-    <img id="color-wall-canvas" src="chipGrid.png" />
-	<svg class="grid-overlay" xmlns="http://www.w3.org/2000/svg">
-		<defs class="svg-defs">
-			<pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-				<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#ffffff" stroke-width="1"/>
-			</pattern>
-		</defs>
-		<rect width="100%" height="100%" fill="url( #smallGrid )" />
-	</svg>
+  <div id="color-wall-canvas"></div>
 	<div id="chip-wrapper"></div>
 	<div id="mouse-listener"></div>
 </div>
@@ -24,25 +16,9 @@
 <div id="console"></div>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="underscore.js"></script>
-<script type="text/javascript" src="tinycolor.js"></script>
 <script type="text/javascript" src="colorWall.js"></script>
 
 <!--
-
-/* ############### TO DO:  ###############
-SHORT::
-
-
-
-MEDIUM::
-############### */
-
-
------------------- ### NOTES ### ------------------
-
-canvas is 50 X28
-ratio of 100/28 = 3.5714285714%
-
 <!-- open /Applications/Google\ Chrome.app/ --args --disable-web-security
 
 

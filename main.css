@@ -24,9 +24,9 @@ body {
   z-index: 3;
 }
 #wrapper {
-    background: #efefee;
-    position: relative;
-  width: 1000px;
+  background: #efefee;
+  position: relative;
+  width: 1049px;
 }
 .grid-overlay,
 #chip-wrapper,
@@ -45,22 +45,19 @@ body {
     position: relative;
     z-index: 4;
 }
-.grid-overlay {
+/*.grid-overlay {
   height: 100%;
   left: 0;
   position: absolute;
   top: 0;
   width: 100%;
   z-index: 2;
-}
+}*/
 #color-wall-canvas {
   height: 100%;
   left: 0;
   position: absolute;
   top: 0;
   width: 100%;
-  image-rendering: -moz-crisp-edges;         /* Firefox */
-  image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
-  image-rendering: pixelated;
-  -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
+  z-index: 1;
 }
