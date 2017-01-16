@@ -13,6 +13,8 @@ create new div to display output on simulator
 confirm size of dyncamilly sized els to confirm no rounding errors
 try removin drop shadow to test performance improvement
 programmatically send severl moves to see if it is the touch interface causing the issue
+
+new animation that grows main chip even more after a pause on it
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -83,7 +85,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     buildingInnerDOM = false,
     lastNewChipWasAddedtoDOM = true,
     queuedCursorMoveTimeout,
-    //updateLoopMax,
+    cachedChipsAreChecked,
+    cachedChipsArePruned,
+    chipPruningRAFloop,
     DOMmutationObserver = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         lastNewChipWasAddedtoDOM = true;
@@ -92,25 +96,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     DOMmutationObserverConfig = { childList: true },
     i,
     x,
-    requestAnimationID;
+    chipUpdateRAFloop;
 
     var createCanvasImage = function() {
-        // var allColorsShort = [];
-        // var result = _.map( allColorsLong, function( color ){
-        //     var r = Math.floor( color.rgb / 65536 );
-        //     var g = Math.floor( ( color.rgb % 65536 ) / 256 );
-        //     var b = color.rgb - r * 65536 - g * 256;
-        //     //return num * 3;
-        //     //return _.property('colorNumber');
-        //     // return 'rgb(' + r + ',' + g + ',' + b + ')';
-        //     return r + ',' + g + ',' + b;
-        //     //return corrected;
-        //     // _.property('someProperty.colorNumber');
-        //     // console.log("colorNumber: " + colorNumber);
-        // });
-
-
-
         _.each ( allColorsLong, function( color ){
             if ( color.archived) {
                 console.log(color.archived);
@@ -118,11 +106,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 var r = Math.floor( color.rgb / 65536 );
                 var g = Math.floor( ( color.rgb % 65536 ) / 256 );
                 var b = color.rgb - r * 65536 - g * 256;
-                //return num * 3;
-                //return _.property('colorNumber');
-                // return 'rgb(' + r + ',' + g + ',' + b + ')';
-                //return r + ',' + g + ',' + b;
-                //return corrected;
                 // _.property('someProperty.colorNumber');
                 //var colorChannels = tinycolor( 'rgb ' + r + ',' + g + ',' + b ).toHex();
                 allColorsShort.push( r, g, b );
@@ -133,20 +116,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             }
         });
 
-
-
-        //console.log( allColorsShort.toString() );
-
-
         _.each( allColorsShort, function() {
             console.log("##### t");
-            //var i = pixelindex * 4;
-            // colorChannels = tinycolor( thisColor ).toRgb();
-            //console.log(thisColor);
-            // cwData[ pixelIndex ] = allColorsShort[ rgbIndex ];
-            // cwData[ pixelIndex + 1] =  allColorsShort[ rgbIndex + 1 ];
-            // cwData[ pixelIndex + 2] =  allColorsShort[ rgbIndex + 2 ];
-            // cwData[ pixelIndex + 3] = 255;
             cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
             //cwContex.fillStyle = 'red';
             cwContex.fillRect( rgbIndex * 20, 0, 20, 20);
@@ -195,7 +166,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
                 buildingInnerDOM = false;
-                cancelAnimationFrame( requestAnimationID );
+                cancelAnimationFrame( chipUpdateRAFloop );
 
                 /*--------------------- ### Once per location update ### ---------------------
                         Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
@@ -203,17 +174,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     */
                     lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
 
-                    setTimeout(function () {
-                        var locationsToExpireCount = locationHistory.length - 60;
-                        if ( locationsToExpireCount > 0 && !buildingInnerDOM ) {
-                            console.log("timeout expiring els");
-                            for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                                var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                                element.parentNode.removeChild(element);
-                                locationHistory.shift();
-                            }
-                        }
-                    }, 1000);
+                    chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
             } else {
                 lastNewChipWasAddedtoDOM = false;
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
@@ -221,12 +182,43 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 $chipWrapper.innerHTML += newChip;
                 //console.log("anim loop: " + animLoopIndex);
                 animLoopIndex += 2;
-                requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
+                chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
             }
         } else {
-            requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
+            chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
         }
     };  /* CLOSE updateInnerChipDOM */
+
+    var pruneCachedChips = function( event ) {
+        if ( !cachedChipsAreChecked ) {
+            www
+        }
+
+        var locationsToExpireCount = locationHistory.length - 200;
+
+        if ( locationsToExpireCount > 0 ) {
+            if ( locationsToExpireCount > 0 && !cachedChipsArePruned ) {
+                // var locationsToExpireCount = locationHistory.length - 200;
+                if ( !buildingInnerDOM ) {
+                    console.log("timeout expiring els");
+                    for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                        var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                        element.parentNode.removeChild(element);
+                        locationHistory.shift();
+                    }
+                }
+            } else {
+                chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
+
+            }
+        } else {
+            chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
+            cancelAnimationFrame( pruneCachedChips );
+        }
+
+    }
+
+
 
     var setPixelDimensions = function( event ) {
         $wrapperWidth = $( $wrapper ).width();
@@ -271,7 +263,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
             newLocation = currentChipRow * 50 + currentChipColumn;
         } else {
-            newLocation = lastUnProcessedLocation;
+            //newLocation = lastUnProcessedLocation;
         }
         if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
             if ( !buildingInnerDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
@@ -302,20 +294,20 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     }
 
                     animLoopIndex = 0;
-                    requestAnimationID = requestAnimationFrame( updateInnerChipDOM );
+                    chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
 
                 } /* END if ( newLocation !== lastLocation ) */
             } else {
                 if ( newLocation !== lastUnProcessedLocation ) {
-                    lastUnProcessedLocation = newLocation;
-                    window.clearTimeout(queuedCursorMoveTimeout);
-                    window.queuedMove = true;
-                    queuedCursorMoveTimeout = window.setTimeout( function() {
-                        if ( window.queuedMove ) {
-                            console.log("fired timeout");
-                            handleGridCursorMove(null);
-                        }
-                    }, 500);
+                    // lastUnProcessedLocation = newLocation;
+                    // window.clearTimeout(queuedCursorMoveTimeout);
+                    // window.queuedMove = true;
+                    // queuedCursorMoveTimeout = window.setTimeout( function() {
+                    //     if ( window.queuedMove ) {
+                    //         console.log("fired timeout");
+                    //         handleGridCursorMove(null);
+                    //     }
+                    // }, 500);
                 }
             } /* END test for currently building DOM */
         } /* END test for moving to edge */
