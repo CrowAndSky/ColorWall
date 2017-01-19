@@ -116,15 +116,42 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             }
         });
 
-        _.each( allColorsShort, function() {
-            console.log("##### t");
-            cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
-            //cwContex.fillStyle = 'red';
-            cwContex.fillRect( rgbIndex * 20, 0, 20, 20);
-            cwContex.fillRect( 20, 0, 20, 20);
-            rgbIndex += 3;
-            pixelIndex += 4;
-        });
+        var canvasLoopIndex = 0,
+            canvasBlockIndex = 0,
+            canvasPreviousBlockChipCount = 0,
+            rgbIndex = 0,
+            canvasCurrentX = 0,
+            canvasCurrentY = 0;
+
+            for (var i = allColorsShort.length - 1; i >= 0; i--) {
+                console.log(canvasLoopIndex);
+                canvasBlockIndex = Math.floor( canvasLoopIndex / 196 );
+                canvasPreviousBlockChipCount = canvasBlockIndex * 196;
+                canvasCurrentX = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 ) * 21;
+                canvasCurrentY = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 21;
+                console.log("canvasPreviousBlockChipCount: " + canvasPreviousBlockChipCount);
+                console.log("canvasCurrentX: " + canvasCurrentX + "     canvasCurrentY: " + canvasCurrentY);
+                cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
+                //cwContex.fillStyle = 'red';
+                cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
+                //cwContex.fillRect( 20, 0, 20, 20);
+                rgbIndex += 3;
+                canvasLoopIndex++;
+            }
+
+        // _.each( allColorsShort, function() {
+        //     console.log(canvasLoopIndex);
+        //     var canvasColumn = ( canvasLoopIndex - ( canvasLoopIndex % 196 ) ) * 21;
+        //     var canvasRow = ( canvasLoopIndex - ( canvasLoopIndex % 196 ) ) / 7 * 21;
+        //     console.log("canvasColumn: " + canvasColumn + "     canvasRow: " + canvasRow);
+        //     cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
+        //     //cwContex.fillStyle = 'red';
+        //     cwContex.fillRect( canvasColumn, canvasRow, 20, 20);
+        //     //cwContex.fillRect( 20, 0, 20, 20);
+        //     rgbIndex += 3;
+        //     canvasLoopIndex++;
+        //     //pixelIndex += 4;
+        // });
 
         //cwContex.putImageData( cwImageData, 0, 0 );
     };
