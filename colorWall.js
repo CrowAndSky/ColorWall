@@ -80,14 +80,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     previouslyActiveChipsLength,
     lastUnProcessedLocation = '',
     stillUpdatingDOM = false,
-    lastNewChipWasAddedtoDOM = true,
+    isDOMtreeBeingUpdated = true,
     queuedCursorMoveTimeout,
     cachedChipsAreChecked,
     cachedChipsArePruned,
     chipPruningRAFloop,
     DOMmutationObserver = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
-        lastNewChipWasAddedtoDOM = true;
+        isDOMtreeBeingUpdated = false;
       });
     }),
     DOMmutationObserverConfig = { childList: true },
@@ -132,13 +132,12 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
                 rgbIndex += 3;
             }
-
             //console.log(allColorsRGB);
 
     };
 
     var updateInnerChipDOM = function() {
-        if ( lastNewChipWasAddedtoDOM ) {
+        if ( !isDOMtreeBeingUpdated ) {
             if ( animLoopIndex >= newChipsToAnimate.length ) {
                 for ( x = 0; x < existingChipsToAnimate.length; x += 2 ) {
                     try {
@@ -184,7 +183,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
                 chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
             } else {
-                lastNewChipWasAddedtoDOM = false;
+                isDOMtreeBeingUpdated = true;
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
                 var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
                 $chipWrapper.innerHTML += newChip;
@@ -204,12 +203,12 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         }
 
         if ( locationsToExpireCount > 0 ) {
-            if ( !stillUpdatingDOM ) {
+            if ( !isDOMtreeBeingUpdated ) {
             //     // var locationsToExpireCount = locationHistory.length - 200;
             //     if ( !stillUpdatingDOM ) {
                     //console.log("timeout expiring els");
                     //for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                        stillUpdatingDOM = true;
+                        isDOMtreeBeingUpdated = true;
                         var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
                         element.parentNode.removeChild(element);
                         locationHistory.shift();
@@ -221,7 +220,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             }
         } else {
             cachedChipsAreChecked = false;
-            stillUpdatingDOM = false;
+            isDOMtreeBeingUpdated = false;
             cancelAnimationFrame( pruneCachedChips );
         }
     }
