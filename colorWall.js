@@ -84,7 +84,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipZindex,
     previouslyActiveChipsLength,
     lastUnProcessedLocation = '',
-    buildingInnerDOM = false,
+    stillUpdatingDOM = false,
     lastNewChipWasAddedtoDOM = true,
     queuedCursorMoveTimeout,
     cachedChipsAreChecked,
@@ -126,21 +126,24 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             canvasCurrentRow = 0,
             canvasCurrentX = 0,
             thisIndex,
+            totalChipCount = Math.floor( allColorsShort.length /  3),
             canvasCurrentY = 0;
 
-            for ( var canvasLoopIndex = 0; canvasLoopIndex < allColorsShort.length; canvasLoopIndex++ ) {
+            for ( var canvasLoopIndex = 0; canvasLoopIndex < totalChipCount; canvasLoopIndex++ ) {
                 //console.log(canvasLoopIndex);
                 canvasBlockIndex = Math.floor( canvasLoopIndex / 196 );
                 canvasPreviousBlockChipCount = canvasBlockIndex * 196;
-                canvasCurrentX = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 ) *21;
-                canvasCurrentY = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 21;
+
+                canvasCurrentX = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 ) * 21;
                 canvasCurrentColumn = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 );
+
+                canvasCurrentY = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 21;
                 canvasCurrentRow = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 50;
 
-                //console.log("canvasCurrentRow: " + canvasCurrentRow);
-
                 thisIndex = canvasCurrentColumn + canvasCurrentRow;
-                //console.log("thisIndex: " + thisIndex);
+                console.log('canvasLoopIndex: ' + canvasLoopIndex);
+
+                // console.log('canvasLoopIndex: ' + canvasLoopIndex + "thisIndex: " + thisIndex + "  canvasCurrentRow: " + canvasCurrentRow + '   canvasCurrentColumn: ' + canvasCurrentColumn);
 
 
 
@@ -151,7 +154,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
                 allColorsRGB[thisIndex] = allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ];
                 //allColorsRGB[thisIndex] = allColorsShort[ rgbIndex ];
-                console.log("allColorsShort[ rgbIndex ]: " + allColorsShort[ rgbIndex ]);
+                //console.log("allColorsShort[ rgbIndex ]: " + allColorsShort[ rgbIndex ]);
                 //allColorsRGB[thisIndex] = thisIndex;
                 //cwContex.fillStyle = 'red';
                 cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
@@ -160,23 +163,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 //canvasLoopIndex++;
             }
 
-            console.log(allColorsRGB);
+            //console.log(allColorsRGB);
 
-        // _.each( allColorsShort, function() {
-        //     console.log(canvasLoopIndex);
-        //     var canvasColumn = ( canvasLoopIndex - ( canvasLoopIndex % 196 ) ) * 21;
-        //     var canvasRow = ( canvasLoopIndex - ( canvasLoopIndex % 196 ) ) / 7 * 21;
-        //     console.log("canvasColumn: " + canvasColumn + "     canvasRow: " + canvasRow);
-        //     cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
-        //     //cwContex.fillStyle = 'red';
-        //     cwContex.fillRect( canvasColumn, canvasRow, 20, 20);
-        //     //cwContex.fillRect( 20, 0, 20, 20);
-        //     rgbIndex += 3;
-        //     canvasLoopIndex++;
-        //     //pixelIndex += 4;
-        // });
-
-        //cwContex.putImageData( cwImageData, 0, 0 );
     };
 
     var updateInnerChipDOM = function() {
@@ -215,16 +203,16 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 currentlyActiveChips.length = 0; /* Reset the currently active chips array */
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
-                buildingInnerDOM = false;
+                // stillUpdatingDOM = false;
                 cancelAnimationFrame( chipUpdateRAFloop );
 
                 /*--------------------- ### Once per location update ### ---------------------
-                        Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                        Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
-                    */
-                    lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
+                    Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
+                    Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
+                */
+                lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
 
-                    chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
+                chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
             } else {
                 lastNewChipWasAddedtoDOM = false;
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
@@ -241,31 +229,31 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     var pruneCachedChips = function( event ) {
         if ( !cachedChipsAreChecked ) {
-            //www
+            var locationsToExpireCount = locationHistory.length - 200;
+            cachedChipsAreChecked = true;
         }
 
-        var locationsToExpireCount = locationHistory.length - 200;
-
         if ( locationsToExpireCount > 0 ) {
-            if ( locationsToExpireCount > 0 && !cachedChipsArePruned ) {
-                // var locationsToExpireCount = locationHistory.length - 200;
-                if ( !buildingInnerDOM ) {
-                    console.log("timeout expiring els");
-                    for ( var i = locationsToExpireCount; i > 0; i-- ) {
+            if ( !stillUpdatingDOM ) {
+            //     // var locationsToExpireCount = locationHistory.length - 200;
+            //     if ( !stillUpdatingDOM ) {
+                    //console.log("timeout expiring els");
+                    //for ( var i = locationsToExpireCount; i > 0; i-- ) {
+                        stillUpdatingDOM = true;
                         var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
                         element.parentNode.removeChild(element);
                         locationHistory.shift();
-                    }
-                }
+                        locationsToExpireCount -= 1;
+                //     }
+                // }
             } else {
                 chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
-
             }
         } else {
-            chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
+            cachedChipsAreChecked = false;
+            stillUpdatingDOM = false;
             cancelAnimationFrame( pruneCachedChips );
         }
-
     }
 
 
@@ -316,11 +304,11 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             //newLocation = lastUnProcessedLocation;
         }
         if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-            if ( !buildingInnerDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
+            if ( !stillUpdatingDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
                 window.queuedMove = false;
 
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-                    buildingInnerDOM = true;
+                    stillUpdatingDOM = true;
 
                     for ( x = 0; x < 9; x++ ) {
                         currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ x ];
@@ -369,7 +357,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
     window.queuedMove = false;
-    console.log("#### VERSION 5");
+    //console.log("#### VERSION 5");
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
