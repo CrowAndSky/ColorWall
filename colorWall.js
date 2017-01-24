@@ -2,12 +2,9 @@
 $( document ).ready( function() {
 /*
 TO DO:
-* use S-W colors from JSON
 * add documensation
-* correct main chip asize
 * adjust an animate drop shadows
 
-IS the new location being set when the build is happening?
 
 create new div to display output on simulator
 confirm size of dyncamilly sized els to confirm no rounding errors
@@ -80,14 +77,16 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     previouslyActiveChipsLength,
     lastUnProcessedLocation = '',
     stillUpdatingDOM = false,
-    isDOMtreeBeingUpdated = true,
+    stillExpiringChips = false,
+    readyToUpdate = false,
     queuedCursorMoveTimeout,
     cachedChipsAreChecked,
     cachedChipsArePruned,
     chipPruningRAFloop,
     DOMmutationObserver = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
-        isDOMtreeBeingUpdated = false;
+        stillUpdatingDOM = false;
+        stillExpiringChips = false;
       });
     }),
     DOMmutationObserverConfig = { childList: true },
@@ -136,8 +135,36 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     };
 
+    /* ------------------ ### How the Animation Loop Works ### ------------------
+    Default state is:
+        stillExpiringChips = false
+        stillUpdatingDOM = false
+        readyToUpdate = true
+
+        When non-throttled pointer move takes us to a new position:
+            handleGridCursorMove() sets the top level animation loop flag - readyToUpdate - is set to false so that the triggered DOM updates can happen without interruption.
+            It also creates the arrays for new chips which need added to the DOM and existing chips that will have a new postional index.
+            Remember that the vast majority of chips are not activated at any given time. handleGridCursorMove() also creates the array of active chips that may need deactivated with the next move.
+
+        stillUpdatingDOM
+
+        stillExpiringChips stillUpdatingDOM readyToUpdate
+
+        updateInnerChipDOM() begins running in a RAF loop. It first loops through adding any new chip ELs
+
+
+        pruneCachedChips
+
+ This will be set to false by the DOMmutationObserver after the new chip is added to the DOM
+
+
+readyToUpdate
+
+ stillExpiringChips stillUpdatingDOM readyToUpdate
+    */
+
     var updateInnerChipDOM = function() {
-        if ( !isDOMtreeBeingUpdated ) {
+        if ( !stillUpdatingDOM ) { /*  */
             if ( animLoopIndex >= newChipsToAnimate.length ) {
                 for ( x = 0; x < existingChipsToAnimate.length; x += 2 ) {
                     try {
@@ -172,18 +199,21 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 currentlyActiveChips.length = 0; /* Reset the currently active chips array */
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
-                // stillUpdatingDOM = false;
-                cancelAnimationFrame( chipUpdateRAFloop );
+                stillUpdatingDOM = false;
 
-                /*--------------------- ### Once per location update ### ---------------------
-                    Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
-                    Essentially, we allow about 12 moves in the color wall before we beginning expiring the original elements
-                */
-                lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
+                cancelAnimationFrame( chipUpdateRAFloop );  /*  */
 
-                chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
+                if ( queuedMoveToProcess ) { /*  */
+                    newLocation = lastUnProcessedLocation;
+                    queuedMoveToProcess = false;
+                    console.log("Executing queued change");
+                    handleGridCursorMove( null );
+                } else {
+                    chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );  /*  */
+                }
+
             } else {
-                isDOMtreeBeingUpdated = true;
+                stillUpdatingDOM = true; /* This will be set to false by the DOMmutationObserver after the new chip is added to the DOM */
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
                 var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
                 $chipWrapper.innerHTML += newChip;
@@ -197,18 +227,21 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     };  /* CLOSE updateInnerChipDOM */
 
     var pruneCachedChips = function( event ) {
+        /* Remove 'expired' members of the JS object and DOM tree that we consider collectively to be the app cache.
+            Essentially, we allow about 35 moves in the color wall before we beginning expiring the original elements */
+
         if ( !cachedChipsAreChecked ) {
             var locationsToExpireCount = locationHistory.length - 200;
             cachedChipsAreChecked = true;
         }
 
         if ( locationsToExpireCount > 0 ) {
-            if ( !isDOMtreeBeingUpdated ) {
+            if ( !stillExpiringChips ) {
             //     // var locationsToExpireCount = locationHistory.length - 200;
             //     if ( !stillUpdatingDOM ) {
                     //console.log("timeout expiring els");
                     //for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                        isDOMtreeBeingUpdated = true;
+                        stillExpiringChips = true; /* This will be set to false by the DOMmutationObserver after the new chip is removed from the DOM */
                         var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
                         element.parentNode.removeChild(element);
                         locationHistory.shift();
@@ -218,14 +251,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             } else {
                 chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
             }
-        } else {
+        } else { /* We're completely finished running an animation loop and return all the loop tracking vars to their default state */
+            lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
             cachedChipsAreChecked = false;
-            isDOMtreeBeingUpdated = false;
+            stillExpiringChips = false;
+            readyToUpdate = true;
             cancelAnimationFrame( pruneCachedChips );
         }
     }
-
-
 
     var setPixelDimensions = function( event ) {
         $wrapperWidth = $( $wrapper ).width();
@@ -242,11 +275,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
         chipStyleSheet.insertRule( "#chip-wrapper > div { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
 
-        // cwContainerWidth = cwContainer.width(),
-        // SVGgridMultiplier = cwContainerWidth * 0.02;
-        // cwContainer.height( $wrapperHeight);
-        // cwContex.putImageData( cwImageData, 0, 0 );
-
         for ( var i = 0; i < 9; i++ ) {
             if ( i === 4 ) {
                 chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(4, 4, 1) }", 1 );
@@ -254,27 +282,26 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
             }
         }
-
-        // SVGgridMultiplier = $wrapperWidth * 0.02;
-        // cwGridPattern.attr({width: SVGgridMultiplier, height: SVGgridMultiplier});
-        // cwGridPatternPath.attr({d: "M "+ SVGgridMultiplier + " 0 L 0 0 0 " + SVGgridMultiplier});
-
     };
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
-        if ( event ) {
-            event = event.originalEvent;
-            event.preventDefault();
+        if ( event ) { /* A queued pointer move not have an event and will use the last new location that was set */
+            event = event.originalEvent; /* Need for touch devices */
+            event.preventDefault(); /* Prevents swiping on touch devices */
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
-            newLocation = currentChipRow * 50 + currentChipColumn;
-        } else {
-            //newLocation = lastUnProcessedLocation;
+            // newLocation = currentChipRow * 50 + currentChipColumn;
         }
+
         if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-            if ( !stillUpdatingDOM ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-                window.queuedMove = false;
+
+            newLocation = currentChipRow * 50 + currentChipColumn;
+
+            if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
+
+                //window.queuedMoveToProcess = false; /* Thus we know that we executed the lat queued move  */
+                queuedMoveToProcess = false; /* Thus we know that we executed the lat queued move  */
 
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
                     stillUpdatingDOM = true;
@@ -304,17 +331,20 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                     chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
 
                 } /* END if ( newLocation !== lastLocation ) */
-            } else {
-                if ( newLocation !== lastUnProcessedLocation ) {
-                    // lastUnProcessedLocation = newLocation;
-                    // window.clearTimeout(queuedCursorMoveTimeout);
-                    // window.queuedMove = true;
+
+            } else { /*  */
+                if ( newLocation !== window.lastUnProcessedLocation ) {
+                    lastUnProcessedLocation = newLocation;
+                    //window.clearTimeout(queuedCursorMoveTimeout); /*  */
+                    queuedMoveToProcess = true; /*  */
+
                     // queuedCursorMoveTimeout = window.setTimeout( function() {
-                    //     if ( window.queuedMove ) {
+                    //     if ( window.queuedMoveToProcess ) {
+                    //         newLocation !== window.lastUnProcessedLocation
                     //         console.log("fired timeout");
                     //         handleGridCursorMove(null);
                     //     }
-                    // }, 500);
+                    // }, 300);
                 }
             } /* END test for currently building DOM */
         } /* END test for moving to edge */
@@ -325,8 +355,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    window.queuedMove = false;
-    //console.log("#### VERSION 5");
+    //window.queuedMoveToProcess = false;
+    console.log("#### VERSION 6");
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
@@ -343,7 +373,4 @@ Nice TO Do
     the drop shadow
         make the drop shadow on a pseudclass whose opacity animates in (and changes size as well)
     the border (if I add it back)
-
-    remove the prime class from all ELs via a timeout after the animation period
-
      ------------------ ###### ---------------------*/
