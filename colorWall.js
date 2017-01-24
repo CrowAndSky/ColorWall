@@ -78,8 +78,9 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     lastUnProcessedLocation = '',
     stillUpdatingDOM = false,
     stillExpiringChips = false,
-    readyToUpdate = false,
-    queuedCursorMoveTimeout,
+    readyToUpdate = true,
+    //queuedCursorMoveTimeout,
+    queuedMoveToProcess,
     cachedChipsAreChecked,
     cachedChipsArePruned,
     chipPruningRAFloop,
@@ -125,7 +126,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 canvasCurrentRow = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 50;
 
                 thisIndex = canvasCurrentColumn + canvasCurrentRow;
-                // console.log('canvasLoopIndex: ' + canvasLoopIndex + "thisIndex: " + thisIndex + "  canvasCurrentRow: " + canvasCurrentRow + '   canvasCurrentColumn: ' + canvasCurrentColumn);
                 cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
                 allColorsRGB[thisIndex] = allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ];
                 cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
@@ -162,6 +162,71 @@ readyToUpdate
 
  stillExpiringChips stillUpdatingDOM readyToUpdate
     */
+
+    /* ------------------ ### Handling Cursor Movement ### ------------------ */
+    var handleGridCursorMove = function( event ) {
+        if ( event ) { /* A queued pointer move not have an event and will use the last new location that was set */
+            event = event.originalEvent; /* Need for touch devices */
+            event.preventDefault(); /* Prevents swiping on touch devices */
+            currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
+            currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
+            // newLocation = currentChipRow * 50 + currentChipColumn;
+        }
+
+        if ( currentChipColumn !== 0 && currentChipColumn !== 49 && currentChipRow !== 0 && currentChipRow !== 27 ) { /*--- Don't update for edge chips, cuz that's hard!  :( ---*/
+
+            newLocation = currentChipRow * 50 + currentChipColumn;
+
+            if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
+                if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
+                    console.log("####### 3");
+                    queuedMoveToProcess = false; /* Starting a new animation loop that will supercede any moves that were previously queued. This will be set back to true is a move is queued while this animation loop is running. */
+                    stillUpdatingDOM = true;
+                    readyToUpdate = false;
+
+                    for ( x = 0; x < 9; x++ ) {
+                        currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ x ];
+                        currentlyActiveChips.push( currentPositionalIndex );
+
+                        if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
+                            existingChipsToAnimate.push( currentPositionalIndex );
+                            existingChipsToAnimate.push( chipPositionalClasses[ x ] );
+                        } else {
+                            //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
+                            newChipsToAnimate.push( currentPositionalIndex );
+                            newChipsToAnimate.push( x );
+                            locationHistory.push( currentPositionalIndex );
+                        }
+
+                        /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
+                        prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
+                        if ( prevActiveIndex >= 0 ) {
+                            previouslyActiveChips.splice( prevActiveIndex, 1 );
+                        }
+                    }
+
+                    animLoopIndex = 0;
+                    chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
+
+                } /* END if ( newLocation !== lastLocation ) */
+
+            } else { /*  */
+                if ( newLocation !== window.lastUnProcessedLocation ) {
+                    lastUnProcessedLocation = newLocation;
+                    //window.clearTimeout(queuedCursorMoveTimeout); /*  */
+                    queuedMoveToProcess = true; /*  */
+
+                    // queuedCursorMoveTimeout = window.setTimeout( function() {
+                    //     if ( window.queuedMoveToProcess ) {
+                    //         newLocation !== window.lastUnProcessedLocation
+                    //         console.log("fired timeout");
+                    //         handleGridCursorMove(null);
+                    //     }
+                    // }, 300);
+                }
+            } /* END test for currently building DOM */
+        } /* END test for moving to edge */
+    }; /* END handleGridCursorMove() */
 
     var updateInnerChipDOM = function() {
         if ( !stillUpdatingDOM ) { /*  */
@@ -217,7 +282,6 @@ readyToUpdate
                 //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
                 var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
                 $chipWrapper.innerHTML += newChip;
-                //console.log("anim loop: " + animLoopIndex);
                 animLoopIndex += 2;
                 chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
             }
@@ -284,79 +348,12 @@ readyToUpdate
         }
     };
 
-    /* ------------------ ### Handling Cursor Movement ### ------------------ */
-    var handleGridCursorMove = function( event ) {
-        if ( event ) { /* A queued pointer move not have an event and will use the last new location that was set */
-            event = event.originalEvent; /* Need for touch devices */
-            event.preventDefault(); /* Prevents swiping on touch devices */
-            currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
-            currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
-            // newLocation = currentChipRow * 50 + currentChipColumn;
-        }
-
-        if ( currentChipColumn !== 0 &&  currentChipColumn !== 49 &&  currentChipRow !== 0 &&  currentChipRow !== 27 ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-
-            newLocation = currentChipRow * 50 + currentChipColumn;
-
-            if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
-
-                //window.queuedMoveToProcess = false; /* Thus we know that we executed the lat queued move  */
-                queuedMoveToProcess = false; /* Thus we know that we executed the lat queued move  */
-
-                if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-                    stillUpdatingDOM = true;
-
-                    for ( x = 0; x < 9; x++ ) {
-                        currentPositionalIndex = newLocation + chipPositionalIndexAdjustments[ x ];
-                        currentlyActiveChips.push( currentPositionalIndex );
-
-                        if ( locationHistory.indexOf( currentPositionalIndex ) >= 0 ) {
-                            existingChipsToAnimate.push( currentPositionalIndex );
-                            existingChipsToAnimate.push( chipPositionalClasses[ x ] );
-                        } else {
-                            //console.log("it's NOT in the locationHistory: " + currentPositionalIndex);
-                            newChipsToAnimate.push( currentPositionalIndex );
-                            newChipsToAnimate.push( x );
-                            locationHistory.push( currentPositionalIndex );
-                        }
-
-                        /* Since this is an active chip, it should be removed from the the previouslyActiveChips array, as those chips will all be deactivated at the loop's close */
-                        prevActiveIndex = previouslyActiveChips.indexOf( currentPositionalIndex );
-                        if ( prevActiveIndex >= 0 ) {
-                            previouslyActiveChips.splice( prevActiveIndex, 1 );
-                        }
-                    }
-
-                    animLoopIndex = 0;
-                    chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
-
-                } /* END if ( newLocation !== lastLocation ) */
-
-            } else { /*  */
-                if ( newLocation !== window.lastUnProcessedLocation ) {
-                    lastUnProcessedLocation = newLocation;
-                    //window.clearTimeout(queuedCursorMoveTimeout); /*  */
-                    queuedMoveToProcess = true; /*  */
-
-                    // queuedCursorMoveTimeout = window.setTimeout( function() {
-                    //     if ( window.queuedMoveToProcess ) {
-                    //         newLocation !== window.lastUnProcessedLocation
-                    //         console.log("fired timeout");
-                    //         handleGridCursorMove(null);
-                    //     }
-                    // }, 300);
-                }
-            } /* END test for currently building DOM */
-        } /* END test for moving to edge */
-    }; /* END handleGridCursorMove() */
-
     /* CLOSE INIT VARIABLES */
 
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    //window.queuedMoveToProcess = false;
-    console.log("#### VERSION 6");
+    console.log("#### VERSION 8");
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
