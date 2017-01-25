@@ -3,15 +3,14 @@ $( document ).ready( function() {
 /*
 TO DO:
 * add documensation
-* adjust an animate drop shadows
+* adjust and animate drop shadows
+* new animation that grows main chip even more after a pause on it
 
-
-create new div to display output on simulator
-confirm size of dyncamilly sized els to confirm no rounding errors
-try removin drop shadow to test performance improvement
-programmatically send severl moves to see if it is the touch interface causing the issue
-
-new animation that grows main chip even more after a pause on it
+* TROUBLE SHOOTING:
+* create new div to display output on simulator
+* confirm size of dyncamilly sized els to confirm no rounding errors
+* try removin drop shadow to test performance improvement
+* programmatically send severl moves to see if it is the touch interface causing the issue
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -132,7 +131,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 rgbIndex += 3;
             }
             //console.log(allColorsRGB);
-
     };
 
     /* ------------------ ### How the Animation Loop Works ### ------------------
@@ -173,8 +171,6 @@ readyToUpdate
             newLocation = currentChipRow * 50 + currentChipColumn; /* This is here so that it won't be reset when a queued move calls the method */
         }
 
-        console.log("newLocation: " + newLocation);
-
         if ( currentChipColumn !== 0 && currentChipColumn !== 49 && currentChipRow !== 0 && currentChipRow !== 27 ) { /*--- Don't update for edge chips, cuz that's hard!  :( ---*/
             if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
@@ -210,16 +206,7 @@ readyToUpdate
             } else { /*  */
                 if ( newLocation !== lastUnProcessedLocation ) {
                     lastUnProcessedLocation = newLocation;
-                    //window.clearTimeout(queuedCursorMoveTimeout); /*  */
                     queuedMoveToProcess = true; /*  */
-
-                    // queuedCursorMoveTimeout = window.setTimeout( function() {
-                    //     if ( window.queuedMoveToProcess ) {
-                    //         newLocation !== window.lastUnProcessedLocation
-                    //         console.log("fired timeout");
-                    //         handleGridCursorMove(null);
-                    //     }
-                    // }, 300);
                 }
             } /* END test for currently building DOM */
         } /* END test for moving to edge */
@@ -277,7 +264,6 @@ readyToUpdate
 
             } else {
                 stillUpdatingDOM = true; /* This will be set to false by the DOMmutationObserver after the new chip is added to the DOM */
-                //console.log("adding EL: " + newChipsToAnimate[ animLoopIndex ]);
                 var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
                 $chipWrapper.innerHTML += newChip;
                 animLoopIndex += 2;
@@ -299,17 +285,11 @@ readyToUpdate
 
         if ( locationsToExpireCount > 0 ) {
             if ( !stillExpiringChips ) {
-            //     // var locationsToExpireCount = locationHistory.length - 200;
-            //     if ( !stillUpdatingDOM ) {
-                    //console.log("timeout expiring els");
-                    //for ( var i = locationsToExpireCount; i > 0; i-- ) {
-                        stillExpiringChips = true; /* This will be set to false by the DOMmutationObserver after the new chip is removed from the DOM */
-                        var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                        element.parentNode.removeChild(element);
-                        locationHistory.shift();
-                        locationsToExpireCount -= 1;
-                //     }
-                // }
+                stillExpiringChips = true; /* This will be set to false by the DOMmutationObserver after the new chip is removed from the DOM */
+                var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                element.parentNode.removeChild(element);
+                locationHistory.shift();
+                locationsToExpireCount -= 1;
             } else {
                 chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
             }
@@ -351,7 +331,7 @@ readyToUpdate
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    console.log("#### VERSION 8");
+    console.log("#### VERSION 9");
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
