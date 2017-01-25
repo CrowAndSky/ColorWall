@@ -170,18 +170,15 @@ readyToUpdate
             event.preventDefault(); /* Prevents swiping on touch devices */
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
-            // newLocation = currentChipRow * 50 + currentChipColumn;
+            newLocation = currentChipRow * 50 + currentChipColumn; /* This is here so that it won't be reset when a queued move calls the method */
         }
 
+        console.log("newLocation: " + newLocation);
+
         if ( currentChipColumn !== 0 && currentChipColumn !== 49 && currentChipRow !== 0 && currentChipRow !== 27 ) { /*--- Don't update for edge chips, cuz that's hard!  :( ---*/
-
-            newLocation = currentChipRow * 50 + currentChipColumn;
-
             if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
-                    console.log("####### 3");
                     queuedMoveToProcess = false; /* Starting a new animation loop that will supercede any moves that were previously queued. This will be set back to true is a move is queued while this animation loop is running. */
-                    stillUpdatingDOM = true;
                     readyToUpdate = false;
 
                     for ( x = 0; x < 9; x++ ) {
@@ -211,7 +208,7 @@ readyToUpdate
                 } /* END if ( newLocation !== lastLocation ) */
 
             } else { /*  */
-                if ( newLocation !== window.lastUnProcessedLocation ) {
+                if ( newLocation !== lastUnProcessedLocation ) {
                     lastUnProcessedLocation = newLocation;
                     //window.clearTimeout(queuedCursorMoveTimeout); /*  */
                     queuedMoveToProcess = true; /*  */
@@ -265,6 +262,7 @@ readyToUpdate
                 existingChipsToAnimate.length = 0;  /* wwww */
                 newChipsToAnimate.length = 0;
                 stillUpdatingDOM = false;
+                readyToUpdate = true;
 
                 cancelAnimationFrame( chipUpdateRAFloop );  /*  */
 
