@@ -4,13 +4,8 @@ $( document ).ready( function() {
 TO DO:
 * add documensation
 * adjust and animate drop shadows
-* new animation that grows main chip even more after a pause on it
-
-* TROUBLE SHOOTING:
-* create new div to display output on simulator
-* confirm size of dyncamilly sized els to confirm no rounding errors
 * try removin drop shadow to test performance improvement
-* programmatically send severl moves to see if it is the touch interface causing the issue
+* new animation that grows main chip even more after a pause on it
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -140,25 +135,27 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         readyToUpdate = true
 
         When non-throttled pointer move takes us to a new position:
-            handleGridCursorMove() sets the top level animation loop flag - readyToUpdate - is set to false so that the triggered DOM updates can happen without interruption.
-            It also creates the arrays for new chips which need added to the DOM and existing chips that will have a new postional index.
-            Remember that the vast majority of chips are not activated at any given time. handleGridCursorMove() also creates the array of active chips that may need deactivated with the next move.
+            If a previous move isn't currently being processed:
+                handleGridCursorMove() sets the top level animation loop flag - readyToUpdate - to false so that the triggered DOM updates can happen without interruption.
+                This flag won't be set back to true until the updateInnerChipDOM() and pruneCachedChips() methods complete.
 
-        stillUpdatingDOM
+                handleGridCursorMove() also creates the arrays for new chips which need added to the DOM and existing chips that will have a new postional index.
+                Remember that the vast majority of chips are not activated at any given time.
 
-        stillExpiringChips stillUpdatingDOM readyToUpdate
+                handleGridCursorMove() also creates the array of active chips that may need deactivated with the next move.
 
-        updateInnerChipDOM() begins running in a RAF loop. It first loops through adding any new chip ELs
+                    updateInnerChipDOM() begins running in a RAF loop. It first loops through adding any new chip ELs. Every time a new chip is added the stillUpdatingDOM flag is set to true and the RAF loop is blocked
+                    until the flag is set back to false, which will be done by a the DOMmutationObserver after the new chip is added to the DOM.
 
+                    After all the new chips are added it updates classes for active chips and then deactivates chips as appropriate.
 
-        pruneCachedChips
+                    Next pruneCachedChips() is called and runs through a RAF loop, removing any old chips from the JS memory and the DOM. Every time a new chip is removed from the DOM
+                    the stillExpiringChips flag is set to true and the RAF loop is blocked until the flag is set back to false, which will be done by a the DOMmutationObserver after the new chip is removed from the DOM
 
- This will be set to false by the DOMmutationObserver after the new chip is added to the DOM
-
-
-readyToUpdate
-
- stillExpiringChips stillUpdatingDOM readyToUpdate
+                    Finally updateInnerChipDOM() checks for any queued moves to process. If it finds any it calls itself, beginning the whole process again.
+                    If no queued moves are found, all the loop tracking vars are returned to their default state, including readyToUpdate being set to true
+            Else:
+                The queuedMoveToProcess flag will be set to true and that location will be saved to potentially be executed when move processing is complete.
     */
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
@@ -338,8 +335,12 @@ readyToUpdate
 
 
 /* ------------------ ### GENERAL STUFF ### ------------------
-Nice TO Do
+* TROUBLE SHOOTING:
+* create new div to display output on simulator
+* confirm size of dyncamilly sized els to confirm no rounding errors
+* programmatically send severl moves to see if it is the touch interface causing the issue
 
+Nice TO DO
 * figure out how to add this:
     DOMmutationObserver.disconnect();
 
