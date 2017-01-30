@@ -261,7 +261,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
             } else {
                 stillUpdatingDOM = true; /* This will be set to false by the DOMmutationObserver after the new chip is added to the DOM */
-                var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;background-color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
+                var newChip = '<div class="chip-priming" id="chip' + newChipsToAnimate[ animLoopIndex ] +'" style="left:' + ( currentChipColumn + chipPositionalColumnAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;top:' + ( currentChipRow + chipPositionalRowAdjustments[ newChipsToAnimate[ animLoopIndex + 1 ] ] ) * smallChipSize + 'px;color:rgb(' + allColorsRGB[ newChipsToAnimate[ animLoopIndex ] ] + ')"></div>';
                 $chipWrapper.innerHTML += newChip;
                 animLoopIndex += 2;
                 chipUpdateRAFloop = requestAnimationFrame( updateInnerChipDOM );
