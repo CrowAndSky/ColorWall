@@ -304,21 +304,25 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         // $( $wrapper ).height( Math.round( $wrapperWidth * 0.56 ) ); THIS WILL NEED TURNED BACK ON
         canvasChipXCount = 50; /* The number of columns in the Color Wall */
         smallChipSize = Math.round( $wrapperWidth / canvasChipXCount );
-        mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount * 2 );
-        mediumChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.3 );
-        mediumChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.3 ); // should be 2?
-        largeChipSize = Math.round( $wrapperWidth / canvasChipXCount * 4 );
-        largeChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 ); // should be 1.5?
-        largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
+        // mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount * 2 );
+        mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount );
+        mediumChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.5 );
+        mediumChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.5 ); // should be 2?
+        // largeChipSize = Math.round( $wrapperWidth / canvasChipXCount * 4 );
+        largeChipSize = Math.round( $wrapperWidth / canvasChipXCount );
+        // largeChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 ); // should be 1.5?
+        // largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
+        largeChipLeftOffset = 0; // should be 1.5?
+        largeChipTopOffset = 0;
         chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset ];
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
         chipStyleSheet.insertRule( "#chip-wrapper > div { height: " + smallChipSize + "px; width: " + smallChipSize + "px; }", 1 );
 
         for ( var i = 0; i < 9; i++ ) {
             if ( i === 4 ) {
-                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(4, 4, 1) }", 1 );
+                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(6, 6, 1) }", 1 );
             } else {
-                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2, 2, 1) }", 1 );
+                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2.25, 2.25, 1) }", 1 );
             }
         }
     };
