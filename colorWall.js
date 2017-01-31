@@ -3,9 +3,6 @@ $( document ).ready( function() {
 /*
 TO DO:
 * add documensation
-* adjust and animate drop shadows
-* try removin drop shadow to test performance improvement
-* new animation that grows main chip even more after a pause on it
 */
 
  /* -------------------- INIT VARIABLES ---------------------*/
@@ -23,7 +20,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     /*------- ### Canvas EL ### ------*/
     cwCanvas = document.getElementById( 'color-wall-canvas' ),
     cwContex = cwCanvas.getContext( "2d" ),
-    cwImageData = cwContex.getImageData( 0, 0, 1049, 587 ),
+    cwImageData = cwContex.getImageData( 0, 0, 1176, 462 ),
     cwData = cwImageData.data,
 
     /*--------------------- ### Initially Empty ### ---------------------*/
@@ -41,7 +38,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     pixelIndex = 0,
 
     /*--------------------- ### Layout Related ### ---------------------*/
-    canvasChipXCount = 50, /* WWWWW */
+    canvasChipXCount = 56, /* WWWWW */
     smallChipSize,
     mediumChipSize,
     mediumChipLeftOffset,
@@ -57,7 +54,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     chipPositionalLeftAdjustments = [],
     chipPositionalTopAdjustments = [],
     chipPositionalClasses = ['nw','n','ne','w','large','e','sw','s','se'],
-    chipPositionalIndexAdjustments = [-51,-50,-49,-1,0,1,49,50,51],
+    // chipPositionalIndexAdjustments = [-51,-50,-49,-1,0,1,49,50,51],
+    chipPositionalIndexAdjustments = [-57,-56,-55,-1,0,1,55,56,57],
     chipPositionalRowAdjustments = [ -1, -1, -1, 0, 0, 0, 1, 1, 1 ],
     chipPositionalColumnAdjustments = [ -1, 0, 1, -1, 0, 1, -1, 0, 1 ],
 
@@ -73,7 +71,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     stillUpdatingDOM = false,
     stillExpiringChips = false,
     readyToUpdate = true,
-    //queuedCursorMoveTimeout,
     queuedMoveToProcess,
     cachedChipsAreChecked,
     cachedChipsArePruned,
@@ -106,26 +103,36 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             canvasCurrentRow = 0,
             canvasCurrentX = 0,
             thisIndex,
+            rowAdjustment = 0,
             totalChipCount = Math.floor( allColorsShort.length /  3),
             canvasCurrentY = 0;
 
-            for ( var canvasLoopIndex = 0; canvasLoopIndex < totalChipCount; canvasLoopIndex++ ) {
-                canvasBlockIndex = Math.floor( canvasLoopIndex / 196 );
-                canvasPreviousBlockChipCount = canvasBlockIndex * 196;
-
-                canvasCurrentX = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 ) * 21;
-                canvasCurrentColumn = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 );
-
-                canvasCurrentY = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 21;
-                canvasCurrentRow = Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) * 50;
-
-                thisIndex = canvasCurrentColumn + canvasCurrentRow;
-                cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
-                allColorsRGB[thisIndex] = allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ];
-                cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
-                rgbIndex += 3;
+        for ( var canvasLoopIndex = 0; canvasLoopIndex < totalChipCount; canvasLoopIndex++ ) {
+            if ( canvasLoopIndex < 631 ) {
+                canvasBlockIndex = Math.floor( canvasLoopIndex / 105 );
+                canvasPreviousBlockChipCount = canvasBlockIndex * 105;
+            } else if ( canvasLoopIndex < 925 ) {
+                rowAdjustment = 15;
+                canvasBlockIndex = Math.floor( ( canvasLoopIndex - 630 ) / 49 );
+                canvasPreviousBlockChipCount = canvasBlockIndex * 49 + 630;
+            } else {
+                rowAdjustment = 0;
+                canvasBlockIndex = Math.floor( ( canvasLoopIndex - 925 ) / 154 ) + 6;
+                canvasPreviousBlockChipCount = canvasBlockIndex * 154;
             }
-            //console.log(allColorsRGB);
+
+            canvasCurrentX = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 ) * 21;
+            canvasCurrentColumn = ( ( ( canvasLoopIndex - canvasPreviousBlockChipCount ) % 7 ) + canvasBlockIndex * 7 );
+
+            canvasCurrentY = ( Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) + rowAdjustment ) * 21;
+            canvasCurrentRow = ( Math.floor( ( canvasLoopIndex - canvasPreviousBlockChipCount ) / 7 ) + rowAdjustment ) * 56;
+
+            thisIndex = canvasCurrentColumn + canvasCurrentRow;
+            cwContex.fillStyle = 'rgb(' + allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ] + ')';
+            allColorsRGB[thisIndex] = allColorsShort[ rgbIndex ] + ',' + allColorsShort[ rgbIndex + 1 ] + ',' + allColorsShort[ rgbIndex + 2 ];
+            cwContex.fillRect( canvasCurrentX, canvasCurrentY, 20, 20);
+            rgbIndex += 3;
+        }
     };
 
     /* ------------------ ### How the Animation Loop Works ### ------------------
@@ -165,10 +172,10 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             event.preventDefault(); /* Prevents swiping on touch devices */
             currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
             currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
-            newLocation = currentChipRow * 50 + currentChipColumn; /* This is here so that it won't be reset when a queued move calls the method */
+            newLocation = currentChipRow * 56 + currentChipColumn; /* This is here so that it won't be reset when a queued move calls the method */
         }
 
-        if ( currentChipColumn !== 0 && currentChipColumn !== 49 && currentChipRow !== 0 && currentChipRow !== 27 ) { /*--- Don't update for edge chips, cuz that's hard!  :( ---*/
+        if ( currentChipColumn !== 0 && currentChipColumn !== 55 && currentChipRow !== 0 && currentChipRow !== 22 ) { /*--- Don't update for edge chips, cuz that's hard!  :( ---*/
             if ( readyToUpdate ) { /*--- Only update if we aren't currently doing DOM updates from the previous move. ---*/
                 if ( newLocation !== lastLocation ) { /*--- Only update everything if we have moved enough to have gone from one chip to another. ---*/
                     queuedMoveToProcess = false; /* Starting a new animation loop that will supercede any moves that were previously queued. This will be set back to true is a move is queued while this animation loop is running. */
@@ -302,17 +309,13 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     var setPixelDimensions = function( event ) {
         $wrapperWidth = $( $wrapper ).width();
         // $( $wrapper ).height( Math.round( $wrapperWidth * 0.56 ) ); THIS WILL NEED TURNED BACK ON
-        canvasChipXCount = 50; /* The number of columns in the Color Wall */
+        canvasChipXCount = 56; /* The number of columns in the Color Wall */
         smallChipSize = Math.round( $wrapperWidth / canvasChipXCount );
-        // mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount * 2 );
-        mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount );
-        mediumChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.5 );
-        mediumChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.5 ); // should be 2?
-        // largeChipSize = Math.round( $wrapperWidth / canvasChipXCount * 4 );
-        largeChipSize = Math.round( $wrapperWidth / canvasChipXCount );
-        // largeChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 ); // should be 1.5?
-        // largeChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 0.375 );
-        largeChipLeftOffset = 0; // should be 1.5?
+        mediumChipSize = Math.round( $wrapperWidth / canvasChipXCount );  // was Math.round( $wrapperWidth / canvasChipXCount * 2 )
+        mediumChipLeftOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.75 );
+        mediumChipTopOffset = Math.round( $wrapperWidth / canvasChipXCount * 1.75 ); // should be 2?;
+        largeChipSize = Math.round( $wrapperWidth / canvasChipXCount );  // was Math.round( $wrapperWidth / canvasChipXCount * 4 )
+        largeChipLeftOffset = 0; // was Math.round( $wrapperWidth / canvasChipXCount * 0.375 );?
         largeChipTopOffset = 0;
         chipPositionalLeftAdjustments = [ -mediumChipLeftOffset, 0, mediumChipLeftOffset, -mediumChipLeftOffset, -largeChipLeftOffset, mediumChipLeftOffset, -mediumChipLeftOffset, 0, mediumChipLeftOffset ];
         chipPositionalTopAdjustments = [ -mediumChipTopOffset, -mediumChipTopOffset, -mediumChipTopOffset, 0, -largeChipLeftOffset, 0, mediumChipTopOffset, mediumChipTopOffset, mediumChipTopOffset ];
@@ -322,7 +325,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             if ( i === 4 ) {
                 chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(6, 6, 1) }", 1 );
             } else {
-                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2.25, 2.25, 1) }", 1 );
+                chipStyleSheet.insertRule( "#chip-wrapper > .chip-"  + chipPositionalClasses[i] + " { transform: translate3d(" + chipPositionalLeftAdjustments[ i ] + "px, " + chipPositionalTopAdjustments[ i ] + "px, 0px) scale3d(2.5, 2.5, 1) }", 1 );
             }
         }
     };
@@ -332,7 +335,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    console.log("#### VERSION 9");
+    console.log("#### VERSION 11");
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
