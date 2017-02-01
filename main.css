@@ -14,7 +14,7 @@ body {
   transform-origin: center center 0px;
   transform: translate3d( 0px, 0px, 0px ) scale3d( 1, 1, 1 );
   transition: transform 1s;
-  transition-timing-function: cubic-bezier(0.690, 0.805, 0.475, 0.905);
+  /* transition-timing-function: cubic-bezier(0.690, 0.805, 0.475, 0.905); */
   z-index: 1;
 }
 #chip-wrapper .chip-n, #chip-wrapper .chip-s, #chip-wrapper .chip-nw, #chip-wrapper .chip-w, #chip-wrapper .chip-sw, #chip-wrapper .chip-ne, #chip-wrapper .chip-e, #chip-wrapper .chip-se, #chip-wrapper .chip-large {
