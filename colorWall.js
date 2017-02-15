@@ -131,6 +131,8 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
+        event.preventDefault();
+
         if ( event ) { /* A queued pointer move not have an event and will use the last new location that was set */
             event = event.originalEvent; /* Need for touch devices */
             event.preventDefault(); /* Prevents swiping on touch devices */
