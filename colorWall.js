@@ -305,18 +305,18 @@ var /*--------------------- ### DOM elements ### ---------------------*/
         }
     };
 
-    var cancelEvent = function( event ) {
-        event.preventDefault();
-        alert( event);
-    }
+    // var cancelEvent = function( event ) {
+    //     event.preventDefault();
+    //     alert( event);
+    // }
 
     /* CLOSE INIT VARIABLES */
 
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    console.log("#### VERSION 14");
-    $( $mouseListener ).on( "touchstart touchend", cancelEvent() );
+    console.log("#### VERSION 15");
+    //$( $mouseListener ).on( "touchstart touchend", cancelEvent() );
     $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
 
 } ); /* CLOSE $( document ).ready */
