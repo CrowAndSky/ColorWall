@@ -131,13 +131,12 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
     /* ------------------ ### Handling Cursor Movement ### ------------------ */
     var handleGridCursorMove = function( event ) {
-        event.preventDefault();
-
         if ( event ) { /* A queued pointer move not have an event and will use the last new location that was set */
-            event = event.originalEvent; /* Need for touch devices */
-            event.preventDefault(); /* Prevents swiping on touch devices */
-            currentChipRow = Math.floor( ( event.pageY - wrapperOffset.top ) / smallChipSize );
-            currentChipColumn = Math.floor( ( event.pageX - wrapperOffset.left ) / smallChipSize );
+            var eventOrig = event.originalEvent; /* Need for touch devices */
+            eventOrig.preventDefault(); /* PreventOrigs swiping on touch devices */
+            eventOrig.stopPropagation();
+            currentChipRow = Math.floor( ( eventOrig.pageY - wrapperOffset.top ) / smallChipSize );
+            currentChipColumn = Math.floor( ( eventOrig.pageX - wrapperOffset.left ) / smallChipSize );
             newLocation = currentChipRow * 56 + currentChipColumn; /* This is here so that it won't be reset when a queued move calls the method */
         }
 
@@ -304,20 +303,14 @@ var /*--------------------- ### DOM elements ### ---------------------*/
             }
         }
     };
-
-    // var cancelEvent = function( event ) {
-    //     event.preventDefault();
-    //     alert( event);
-    // }
-
     /* CLOSE INIT VARIABLES */
 
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
     console.log("#### VERSION 15");
-    //$( $mouseListener ).on( "touchstart touchend", cancelEvent() );
-    $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
+    // $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
+    $( $mouseListener ).on( "mousemove touchmove", handleGridCursorMove );
 
 } ); /* CLOSE $( document ).ready */
 
