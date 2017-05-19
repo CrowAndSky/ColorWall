@@ -1,9 +1,12 @@
+/*
+SO HERE'S THE PROBLEM, I'M GUESSING:
+    Coordinates of surrounding chips are being incorrectly set by a queued event because of failure to grab the current scope at the time the event is quede
+*/
+
+
+
 'use strict';
 $( document ).ready( function() {
-/*
-TO DO:
-* add documensation
-*/
 
  /* -------------------- INIT VARIABLES ---------------------*/
 var /*--------------------- ### DOM elements ### ---------------------*/
@@ -158,7 +161,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                             newChipsToAnimate.push( currentPositionalIndex );
                             newChipsToAnimate.push( x );
                             locationHistory.push( currentPositionalIndex );
-                            console.log("Adding to location history: " + currentPositionalIndex);
+                            //console.log("Adding to location history: " + currentPositionalIndex);
                             //console.log( locationHistory );
                         }
 
@@ -220,7 +223,6 @@ var /*--------------------- ### DOM elements ### ---------------------*/
                 existingChipsToAnimate.length = 0; /* Reset the currently active chips array */
                 newChipsToAnimate.length = 0;
                 stillUpdatingDOM = false;
-                /* wwww NTO SURE THIS IS THE CORRECT SPOT readyToUpdate = true;  */
 
                 cancelAnimationFrame( chipUpdateRAFloop );  /* Finished running the loop that updates the chip DOM */
 
@@ -258,18 +260,24 @@ var /*--------------------- ### DOM elements ### ---------------------*/
 
         if ( locationsToExpireCount > 0 ) {
             if ( !stillExpiringChips ) {
-                console.log("expiring chip #: " + locationHistory[ 0 ]);
+                var didNodeDelteSucceed = true;
+                //console.log("expiring chip #: " + locationHistory[ 0 ]);
                 stillExpiringChips = true; /* This will be set to false by the DOMmutationObserver after the new chip is removed from the DOM */
-                // var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                // element.parentNode.removeChild(element);
-                locationHistory.shift();
-                locationsToExpireCount -= 1;
-                var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
-                element.parentNode.removeChild(element);
+
+                // TO DO put the code below in a try catch, and readd chip to locationHistory if it fails and set stillExpiringChips to ?
+                try {
+                    var element = document.getElementById( 'chip' + locationHistory[ 0 ] );
+                    element.parentNode.removeChild(element);
+                } catch(e) {
+                    didNodeDelteSucceed = false;
+                    console.error( "Failed to find chip " + previouslyActiveChips[ x ] );
+                }
+
+                if ( didNodeDelteSucceed ) {
+                    locationHistory.shift();
+                    locationsToExpireCount -= 1;
+                }
             }
-            // } else {
-            //     chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
-            // }
             chipPruningRAFloop = requestAnimationFrame( pruneCachedChips );
         } else { /* We're completely finished running an animation loop and return all the loop tracking vars to their default state */
             lastLocation = newLocation;  /* -- So that we're ready for the next new location - */
@@ -308,7 +316,7 @@ var /*--------------------- ### DOM elements ### ---------------------*/
     setPixelDimensions();
     createCanvasImage();
     DOMmutationObserver.observe( $chipWrapper, DOMmutationObserverConfig);
-    console.log("#### VERSION 15");
+    console.log("#### VERSION 16");
     // $( $mouseListener ).on( "mousemove touchmove", _.throttle( handleGridCursorMove, 100 ) );
     $( $mouseListener ).on( "mousemove touchmove", handleGridCursorMove );
 

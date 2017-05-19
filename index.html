@@ -8,13 +8,62 @@
 </head>
 <body>
 
+<div class="room__wrapper svg-defs-wrapper">
+  <svg class="room__svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1280 1149">
+    <defs class="svg-defs-wrapper">
+      <mask id="room-mask" x="0" y="0" width="100" height="100">
+        <image class="room__image" xlink:href="./images/room-mask-3.png"  />
+      </mask>
+      <filter id="room-filter-1">
+        <feFlood id="stain-sample__filter--tint" flood-color="#abcdef" result="tintHue" />
+        <feBlend mode="multiply" in="tintHue" in2="SourceGraphic" result="darkenedSample" />
+      </filter>
+    </defs>
+  </svg>
+</div>
+
 <div id="wrapper">
   <canvas id="color-wall-canvas" width="1176" height="462"></canvas>
 	<div id="chip-wrapper"></div>
 	<div id="mouse-listener"></div>
 </div>
-
 <div id="console"></div>
+
+<div id="perfect-app-wrapper">
+<div class="room__wrapper svg-defs-wrapper">
+  <svg class="room__svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1280 1149">
+    <defs class="svg-defs-wrapper">
+      <mask id="room-mask" x="0" y="0" width="100" height="100">
+        <image class="room__image" xlink:href="./images/room-mask-3.png"  />
+      </mask>
+      <filter id="room-filter-1">
+        <feFlood id="stain-sample__filter--tint" flood-color="#abcdef" result="tintHue" />
+        <feBlend mode="multiply" in="tintHue" in2="SourceGraphic" result="darkenedSample" />
+      </filter>
+        <!-- color-interpolation-filters:  sRGB | linearRGB  -->
+    </defs>
+  </svg>
+</div>
+
+<div class="room__wrapper">
+  <svg class="room__svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1280 1149">
+    <image x="0" y="0"  class="room__image" xlink:href="./images/room3.jpg" />
+    <image class="room__image" xlink:href="./images/room3.jpg" filter="url(#room-filter-1)" mask="url(#room-mask)" />
+  </svg>
+  <div class="color__details">
+    <h1 class="color__details--title color__details--title--light">Bauhaus Buff</h1>
+  </div>
+</div>
+
+<div class="room__wrapper room-b">
+  <svg class="room__svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1280 1149">
+    <image x="0" y="0"  class="room__image" xlink:href="./images/room3.jpg"  />
+    <image class="room__image" xlink:href="./images/room3.jpg" filter="url(#room-filter-2)" mask="url(#room-mask)" />
+  </svg>
+</div>
+
+</div>  <!-- CLOSE perfect-app-wrapper -->
+
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="underscore.js"></script>
 <script type="text/javascript" src="tinycolor.js"></script>
